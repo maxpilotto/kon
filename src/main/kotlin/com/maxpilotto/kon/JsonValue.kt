@@ -69,7 +69,7 @@ class JsonValue : Json {
     }
 
     override fun set(key: String, element: Any?) {
-        asJsonObject()[key] = JsonValue(element)
+        asJsonObject()[key] = wrap(element)
     }
 
     override fun set(index: Int, element: Any?): JsonValue {
