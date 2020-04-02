@@ -77,11 +77,7 @@ class JsonValue : Json {
     }
 
     override fun toString(): String {
-        return when (content){
-            is String -> "\"$content\""
-
-            else -> content.toString()
-        }
+        return content.toString()
     }
 
     override fun hashCode(): Int {
