@@ -26,20 +26,24 @@ class JsonRequest {
             return JsonParser(stream)
         }
 
+        @JvmStatic
         fun fetchObjectSync(url: String): JsonObject {
             return fetchSync(url).nextObject()
         }
 
+        @JvmStatic
         fun fetchArraySync(url: String): JsonArray {
             return fetchSync(url).nextArray()
         }
 
+        @JvmStatic
         fun fetchObject(url: String, callback: (JsonObject) -> Unit) {
             thread {
                 callback(fetchObjectSync(url))
             }
         }
 
+        @JvmStatic
         fun fetchArray(url: String, callback: (JsonArray) -> Unit) {
             thread {
                 callback(fetchArraySync(url))

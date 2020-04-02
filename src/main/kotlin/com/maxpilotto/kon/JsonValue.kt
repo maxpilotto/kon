@@ -559,6 +559,7 @@ class JsonValue : Json {
          *
          * This is the same as instantiating JsonValue(true)
          */
+        @JvmStatic
         val TRUE = JsonValue(true)
 
         /**
@@ -566,6 +567,7 @@ class JsonValue : Json {
          *
          * This is the same as instantiating JsonValue(false)
          */
+        @JvmStatic
         val FALSE = JsonValue(false)
 
         /**
@@ -573,6 +575,7 @@ class JsonValue : Json {
          *
          * This is the same as instantiating JsonValue(null)
          */
+        @JvmStatic
         val NULL = JsonValue(null)
     }
 }
