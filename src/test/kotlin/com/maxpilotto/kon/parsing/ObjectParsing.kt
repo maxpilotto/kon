@@ -13,26 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maxpilotto.kon.arrays
+package com.maxpilotto.kon.parsing
 
 import com.maxpilotto.kon.JsonObject
+
+data class Address(
+    val street: String,
+    val number: Int,
+    val country: String
+)
 
 fun main() {
     val json = JsonObject(
         """
         {
-            "name": "Nested arrays",
-            "array": [
-                [
-                    [
-                        [ "apples", "bananas", "oranges" ]
-                    ]
-                ]
-            ]
+            "firstName": "John",
+            "lastName": "Doe",
+            "address": {
+                "street": "Downing Street",
+                "number": 10,
+                "country": "England"
+            }
         }
         """
     )
-    val apple = json["array"][0][0][0][0].asString()
-
-    println(apple)
+    val address = json["address"].asObject {
+        Address(
+            it.getString("street"),
+            it.getInt("number"),
+            it.getString("country")
+        )
+    }
 }

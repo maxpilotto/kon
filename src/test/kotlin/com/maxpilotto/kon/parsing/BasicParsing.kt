@@ -13,37 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maxpilotto.kon
+package com.maxpilotto.kon.parsing
+
+import com.maxpilotto.kon.JsonObject
 
 fun main() {
-    val string = """
+    val json = JsonObject(
+        """
         {
             "firstName": "John",
             "lastName": "Doe",
-            "age": "null"
+            "dob": "1987/09/25"
         }
-    """.trimIndent()
-    val json = JsonObject(string)
+        """
+    )
 
-    // Using JsonValue
-    println(json.opt("age", 32))
-    println(json.get("age"))
-
-    // Using Any
-    println(json.optValue("age", 32))
-    println(json.getValue("age"))
-
-    // Using String
-    println(json.optString("age", "32"))
-    println(json.getString("age"))
-
-    // Using Int
-    println(json.optInt("age", 32))
-
-    try {
-        println(json.getInt("age"))     // null cannot be parsed as Int
-    } catch (e: Exception) {
-        println(e.message)
-    }
-
+    println(json.getString("firstName"))
+    println(json.getDate("dob", "yyyy/MM/dd"))
 }

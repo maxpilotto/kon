@@ -13,26 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maxpilotto.kon.arrays
+package com.maxpilotto.kon.extensions
 
+import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
 
-fun main() {
-    val json = JsonObject(
-        """
-        {
-            "name": "Nested arrays",
-            "array": [
-                [
-                    [
-                        [ "apples", "bananas", "oranges" ]
-                    ]
-                ]
-            ]
-        }
-        """
-    )
-    val apple = json["array"][0][0][0][0].asString()
+fun String.toJsonObject() = JsonObject(this)
 
-    println(apple)
-}
+fun String.toJsonArray() = JsonArray(this)

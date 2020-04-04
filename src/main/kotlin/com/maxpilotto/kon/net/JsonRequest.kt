@@ -22,5 +22,5 @@ import java.net.URL
 import kotlin.concurrent.thread
 
 class JsonRequest {
-
+    //TODO Request builder
 }

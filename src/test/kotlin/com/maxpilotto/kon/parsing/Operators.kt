@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maxpilotto.kon.arrays
+package com.maxpilotto.kon.parsing
 
 import com.maxpilotto.kon.JsonObject
 
@@ -21,18 +21,19 @@ fun main() {
     val json = JsonObject(
         """
         {
-            "name": "Nested arrays",
-            "array": [
-                [
-                    [
-                        [ "apples", "bananas", "oranges" ]
-                    ]
-                ]
+            "firstName": "John",
+            "lastName": "Doe",
+            "addresses": [
+                {
+                    "street": "Downing Street",
+                    "number": 10,
+                    "country": "England"
+                }
             ]
         }
         """
     )
-    val apple = json["array"][0][0][0][0].asString()
 
-    println(apple)
+    println(json["firstName"])
+    println(json["addresses"][0]["street"])
 }

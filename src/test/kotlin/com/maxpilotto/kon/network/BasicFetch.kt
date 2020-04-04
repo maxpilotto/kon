@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maxpilotto.kon
+package com.maxpilotto.kon.network
+
+import com.maxpilotto.kon.net.JsonService
 
 fun main() {
-    val string = """
-        {
-            "name": "Parser test",
-            "object": {
-                "firstName": "John",
-                "lastName": "Doe"
-            },
-            "array": [1,2,3,4,5]
-        }
-    """.trimIndent()
-    val json = JsonObject(string)
+    // Sync call
+    val todos = JsonService.fetchArray("https://jsonplaceholder.typicode.com/todos")
 
-    println(json)
+    // Async call
+    JsonService.fetchArray("https://jsonplaceholder.typicode.com/todos") {
+        println(it)
+    }
 }

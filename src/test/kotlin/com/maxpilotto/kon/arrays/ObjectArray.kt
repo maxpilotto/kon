@@ -23,7 +23,7 @@ data class Genre(
 )
 
 fun main() {
-    val json =
+    val obj = JsonObject(
         """
         {
             "name": "Object array",
@@ -46,8 +46,8 @@ fun main() {
                 }
             ]
         }
-    """.trimIndent()
-    val obj = JsonObject(json)
+        """
+    )
     val array = obj["genres"].asJsonArray()
     val genres = array.toObjectList {
         Genre(

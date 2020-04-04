@@ -18,7 +18,7 @@ package com.maxpilotto.kon.objects
 import com.maxpilotto.kon.JsonObject
 
 fun main() {
-    val json =
+    val obj = JsonObject(
         """
         {
             "name": "Nested arrays",
@@ -34,10 +34,10 @@ fun main() {
                 ]
             ]
         }
-    """.trimIndent()
-    val obj = JsonObject(json)
+        """
+    )
 
-    obj.remove("array",0)
+    obj.remove("array", 0)
 
     println(obj)
 }
