@@ -30,14 +30,26 @@ class JsonArray : Json, MutableList<Any?> {
     override val size: Int
         get() = list.size
 
+    /**
+     * Creates an empty JsonArray
+     */
     constructor() : this(listOf())
 
+    /**
+     * Creates a JsonArray from the given [string]
+     */
     constructor(string: String) : this(JsonParser(string).nextArray())
 
+    /**
+     * Clones the given [jsonArray]
+     */
     constructor(jsonArray: JsonArray) : this(jsonArray.list)
 
-    constructor(list: List<JsonValue>) {
-        this.list = list.toMutableList()
+    /**
+     * Creates a JsonArray from the given [collection]
+     */
+    constructor(collection: Collection<Any?>) {
+        this.list = wrap(collection).toMutableList()
     }
 
     override fun toString(): String {

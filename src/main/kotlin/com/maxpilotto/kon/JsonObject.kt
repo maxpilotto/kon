@@ -54,12 +54,24 @@ class JsonObject : Json {   //TODO Add value observer
     val size: Int
         get() = map.size
 
+    /**
+     * Creates an empty JsonObject
+     */
     constructor() : this(hashMapOf())
 
-    constructor(json: String) : this(JsonParser(json).nextObject())
+    /**
+     * Creates a JsonObject from the given [string]
+     */
+    constructor(string: String) : this(JsonParser(string).nextObject())
 
+    /**
+     * Clones the given [jsonObject]
+     */
     constructor(jsonObject: JsonObject) : this(jsonObject.map)
 
+    /**
+     * Creates a JsonObject from the given [map]
+     */
     constructor(map: MutableMap<String, JsonValue>) {
         this.map = map
     }

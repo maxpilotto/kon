@@ -15,8 +15,6 @@
  */
 package com.maxpilotto.kon.util
 
-import kotlin.Exception
-
 class JsonException(message: String?) : Exception(message) {
     constructor(exception: Exception) : this(exception.message)
 

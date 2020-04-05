@@ -15,9 +15,9 @@
  */
 package com.maxpilotto.kon.protocols
 
-import com.maxpilotto.kon.JsonValue
-import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.JsonArray
+import com.maxpilotto.kon.JsonObject
+import com.maxpilotto.kon.JsonValue
 import com.maxpilotto.kon.util.JsonException
 
 /**

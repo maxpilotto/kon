@@ -15,15 +15,12 @@
  */
 package com.maxpilotto.kon
 
-import com.maxpilotto.kon.extensions.*
+import com.maxpilotto.kon.extensions.notInside
 import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
 import java.io.File
 import java.io.InputStream
 import java.io.Reader
-import java.net.URL
-import java.net.URLConnection
-import kotlin.concurrent.thread
 
 /**
  * Json parsing utility

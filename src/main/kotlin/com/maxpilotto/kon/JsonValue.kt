@@ -22,8 +22,6 @@ import java.net.URL
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
 
 /**
  * Wrapper for every Json value

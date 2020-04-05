@@ -15,12 +15,6 @@
  */
 package com.maxpilotto.kon.net
 
-import com.maxpilotto.kon.JsonArray
-import com.maxpilotto.kon.JsonObject
-import com.maxpilotto.kon.JsonParser
-import java.net.URL
-import kotlin.concurrent.thread
-
 class JsonRequest {
     //TODO Request builder
 }
