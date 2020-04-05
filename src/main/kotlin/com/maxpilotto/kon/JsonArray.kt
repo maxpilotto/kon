@@ -49,7 +49,7 @@ class JsonArray : Json, MutableList<Any?> {
      * Creates a JsonArray from the given [collection]
      */
     constructor(collection: Collection<Any?>) {
-        this.list = wrap(collection).toMutableList()
+        this.list = wrap(collection).toMutableList()    //TODO Recursive wrapping might be needed
     }
 
     override fun toString(): String {

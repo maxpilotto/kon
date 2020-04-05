@@ -73,7 +73,7 @@ class JsonObject : Json {   //TODO Add value observer
      * Creates a JsonObject from the given [map]
      */
     constructor(map: MutableMap<String, JsonValue>) {
-        this.map = map
+        this.map = map      //TODO Recursive wrapping should be used
     }
 
     override fun toString(): String {   //TODO Add prettifier
