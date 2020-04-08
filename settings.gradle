@@ -1,2 +1,5 @@
 rootProject.name = 'kon'
+include 'processor'
+include 'kon'
+include 'samples'
 
