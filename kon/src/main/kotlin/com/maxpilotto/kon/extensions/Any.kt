@@ -15,9 +15,9 @@
  */
 package com.maxpilotto.kon.extensions
 
-import com.maxpilotto.kon.JsonValue
-import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.JsonArray
+import com.maxpilotto.kon.JsonObject
+import com.maxpilotto.kon.JsonValue
 
 /**
  * Wraps this value around a [JsonValue]

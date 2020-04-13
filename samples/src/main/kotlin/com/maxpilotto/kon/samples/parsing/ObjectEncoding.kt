@@ -15,8 +15,14 @@
  */
 package com.maxpilotto.kon.samples.parsing
 
+import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.annotations.Codable
 import java.util.*
+
+data class Genre(
+    val id: Int,
+    val name: String
+)
 
 @Codable
 data class Author(
@@ -30,15 +36,50 @@ data class Book(
     val title: String,
     val year: Int,
     val author: Author,
-    val date: Date
+    val date: Date = Date(),
+    val genres: List<List<Genre>> = listOf(
+        listOf(
+            Genre(0, "Dystopian Fiction"),
+            Genre(0, "Science fiction"),
+            Genre(0, "Social science fiction")
+        )
+    ),
+    val map: Map<String, Int> = mapOf(
+        "first" to 1,
+        "second" to 2,
+        "third" to 3
+    )
 )
 
 fun main() {
     val author = Author("George", "Orwell", 1903)
-    val book = Book("1984", 1948, author, Date())
-    val json = book.toJson()
+    val book = Book(
+        "1984", 1948, author
+    )
+    val json = book.encode {
+        when (it) {
+            is Date -> it.time
+            is Genre -> JsonObject().apply {
+                //TODO Add a constructor that takes a list of Entities
+                //TODO Create a JsonObject builder
+
+                set("id", it.id)
+                set("name", it.name)
+            }
+
+            else -> null
+        }
+    }
 
     println(json)
+
+    try {
+        JsonObject(json)
+
+        println("Json is valid")
+    } catch (e: Exception) {
+        println("Json is not valid")
+    }
 
 //    val author2 = Author.fromJson(json)
 

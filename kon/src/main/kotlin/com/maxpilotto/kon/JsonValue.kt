@@ -53,7 +53,7 @@ class JsonValue : Json {
     var content: Any?
         private set
 
-    constructor(value: Any? = null) {
+    constructor(value: Any? = null) {       //TODO Limit the usage of the JsonValue to the library only
         this.content = if (value is JsonValue) {
             value.content
         } else {
