@@ -16,6 +16,8 @@
 package com.maxpilotto.kon.util
 
 class JsonException(message: String?) : Exception(message) {
+    constructor() : this("")
+
     constructor(exception: Exception) : this(exception.message)
 
     constructor(message: String?, exception: Exception) : this("$message, ${exception.message}")

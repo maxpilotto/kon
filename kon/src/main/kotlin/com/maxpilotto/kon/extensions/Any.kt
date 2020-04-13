@@ -16,6 +16,8 @@
 package com.maxpilotto.kon.extensions
 
 import com.maxpilotto.kon.JsonValue
+import com.maxpilotto.kon.JsonObject
+import com.maxpilotto.kon.JsonArray
 
 /**
  * Wraps this value around a [JsonValue]
@@ -33,5 +35,19 @@ fun Any?.toJsonValue(): JsonValue {
         null -> JsonValue.NULL
 
         else -> JsonValue(this)
+    }
+}
+
+/**
+ * Prints this value as a pretty printable String
+ *
+ * This is meant to be used internally, [JsonValue], [JsonObject] and
+ * [JsonArray] all have a method for that
+ */
+internal fun Any?.prettify(): String {
+    return when (this) {
+        is String -> "\"$this\""
+
+        else -> toString()
     }
 }

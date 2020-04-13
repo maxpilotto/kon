@@ -16,7 +16,6 @@
 package com.maxpilotto.kon
 
 import com.maxpilotto.kon.extensions.notInside
-import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
 import java.io.File
 import java.io.InputStream
@@ -145,7 +144,7 @@ class JsonParser {     //TODO Add option for detailed errors using the IndexPath
                 if (next() == ',') {
                     back()
 
-                    result.add(JsonValue.NULL)
+                    result.add(null)
                 } else {
                     back()
 
@@ -180,24 +179,24 @@ class JsonParser {     //TODO Add option for detailed errors using the IndexPath
     }
 
     /**
-     * Returns the next value, this is a generic [Json], which could be a [JsonObject], [JsonArray] or [JsonValue]
+     * Returns the next value
      */
-    fun nextValue(): JsonValue {
+    fun nextValue(): Any? {
         var c = next()
 
         return when (c) {
             '"' -> {       //TODO Add single quotes
-                JsonValue(nextString())
+                nextString()
             }
             '{' -> {
                 back()
 
-                JsonValue(nextObject())
+                nextObject()
             }
             '[' -> {
                 back()
 
-                JsonValue(nextArray())
+                nextArray()
             }
 
             else -> {
@@ -217,7 +216,7 @@ class JsonParser {     //TODO Add option for detailed errors using the IndexPath
                     throw JsonException("Missing value")
                 }
 
-                JsonValue(parseValue(value))
+                parseValue(value)
             }
         }
     }
@@ -286,9 +285,7 @@ class JsonParser {     //TODO Add option for detailed errors using the IndexPath
     }
 
     /**
-     * Parses the given string [value]
-     *
-     * This will return a value, wrapped with in a [JsonValue], which will be a number, boolean or null value
+     * Parses the given string [value], which will result in a Number, Boolean or null value
      */
     private fun parseValue(value: String): Any? {
         return when {

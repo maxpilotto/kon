@@ -18,36 +18,35 @@ package com.maxpilotto.kon.protocols
 import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.JsonValue
-import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.util.JsonException
 
 /**
  * Interface containing all the access operators used by
  * Json entities like the [JsonObject] and [JsonArray]
  */
-interface Json {
+abstract class Json {
     /**
-     * Returns a JsonValue for the given [key]
+     * Returns the value wrapped in a [JsonValue] for the given [key]
      *
      * @throws JsonException If the given [key] doesn't exist
      */
-    operator fun get(key: String): JsonValue {
+    open operator fun get(key: String): JsonValue {
         throw JsonException("Operation not supported")
     }
 
     /**
-     * Returns a JsonValue at the given [index]
+     * Returns the value wrapped in a [JsonValue] at the given [index]
      */
-    operator fun get(index: Int): JsonValue {
+    open operator fun get(index: Int): JsonValue {
         throw JsonException("Operation not supported")
     }
 
     /**
      * Sets the given [element] for the given [key]
      *
-     * The [element] will be wrapped around a [JsonValue] if needed
+     * If the [element] is a [JsonValue], the value will be unwrapped
      */
-    operator fun set(key: String, element: Any?) {
+    open operator fun set(key: String, element: Any?) {
         throw JsonException("Operation not supported")
     }
 
@@ -55,30 +54,20 @@ interface Json {
      * Sets the given [element] at the given [index] and
      * returns the item previously at the given [index]
      *
-     * The [element] will be wrapped around a [JsonValue] if needed
+     * If the [element] is a [JsonValue], the value will be unwrapped
      */
-    operator fun set(index: Int, element: Any?): JsonValue {
+    open operator fun set(index: Int, element: Any?): Any? {
         throw JsonException("Operation not supported")
     }
 
     /**
-     * Wraps the given [value] inside a [JsonValue] object
+     * Unwraps the given [value] if it is inside a [JsonValue],
+     * otherwise it will return the [value] itself
      *
-     * If [value] is already a [JsonValue],
-     * the value won't be wrapped again
+     * This is a handy method that handles the type check
      */
-    fun wrap(value: Any?): JsonValue {
-        return value.toJsonValue()
-    }
-
-    /**
-     * Unwraps the given [value] if it is inside a [JsonValue]
-     *
-     * If the [value] is already a raw value,
-     * nothing will change
-     */
-    fun unwrap(value: Any?): Any? {
-        if (value is JsonValue){
+    protected fun unwrap(value: Any?): Any? {
+        if (value is JsonValue) {
             return value.content
         }
 
@@ -86,19 +75,9 @@ interface Json {
     }
 
     /**
-     * Wraps all items of the given [collection] inside a [JsonValue] object,
-     * resulting in a List of [JsonValue]
-     *
-     * If values are already instances of the [JsonValue] class,
-     * they won't be wrapped again
+     * Returns this entity as a pretty printable output
      */
-    fun wrap(collection: Collection<Any?>): List<JsonValue> {
-        val list = mutableListOf<JsonValue>()
-
-        for (item in collection) {
-            list.add(wrap(item))
-        }
-
-        return list
-    }
+    //TODO Add indent option
+    //TODO Add dateFormat, so all dates can print accordingly
+    abstract fun prettify(): String
 }

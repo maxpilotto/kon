@@ -16,6 +16,8 @@
 package com.maxpilotto.kon
 
 import com.maxpilotto.kon.extensions.Calendar
+import com.maxpilotto.kon.extensions.prettify
+import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
 import java.math.BigDecimal
@@ -23,13 +25,43 @@ import java.net.URL
 import java.text.DateFormat
 import java.util.*
 
+/**
+ * # JsonObject
+ *
+ * Representation of a JSON Object, which is implemented using a
+ * mutable map of <String,Any?>
+ *
+ * ## Get/Get value
+ * The [get] and [getValue] methods can be used to retrieve a value for a given key
+ *
+ * The first will return a [JsonValue], which is used to quickly navigate through
+ * objects and arrays
+ *
+ * The second one instead will return the actual value
+ *
+ * ## Values and Optional values
+ *
+ * An optional value is a value that might not exist or might be null
+ *
+ * Every method that returns a value will throw an exception if the key doesn't exist
+ * or the value is null, a null value is represented by the string "null"
+ *
+ * ```
+ *
+ * val json = JsonObject("{ "value": "null" }")
+ *
+ * val n1 = json.getInt("value")    // Throws an exception
+ * val n2 = json.optInt("value")    // Will return 0
+ *
+ * ```
+ */
 class JsonObject : Json {   //TODO Add value observer
-    private var map: MutableMap<String, JsonValue>
+    private var map: MutableMap<String, Any?>
 
     /**
      * Returns a [MutableSet] of all key/value pairs in this object
      */
-    val entries: MutableSet<MutableMap.MutableEntry<String, JsonValue>>
+    val entries: MutableSet<MutableMap.MutableEntry<String, Any?>>
         get() = map.entries
 
     /**
@@ -43,7 +75,7 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * Note that this collection may contain duplicate values
      */
-    val values: MutableCollection<JsonValue>
+    val values: MutableCollection<Any?>
         get() = map.values
 
     /**
@@ -72,65 +104,68 @@ class JsonObject : Json {   //TODO Add value observer
     /**
      * Creates a JsonObject from the given [map]
      */
-    constructor(map: MutableMap<String, JsonValue>) {
-        this.map = map      //TODO Recursive wrapping should be used
+    constructor(map: MutableMap<String, Any?>) {
+        this.map = map
     }
 
-    override fun toString(): String {   //TODO Add prettifier
-        return map.entries.joinToString(",","{","}",transform = {
-            "${it.key}:${it.value}"
+    override fun toString(): String {
+        return prettify()
+    }
+
+    override fun prettify(): String {
+        return map.entries.joinToString(",", "{", "}", transform = {
+            """
+                "${it.key}":${it.value.prettify()}
+            """.trimIndent()    //TODO Check if JsonArray and JsonObect work too
         })
     }
 
     override fun get(key: String): JsonValue {
-        return map[key] ?: throw JsonException("Key '$key' was not found")
+        return (getValue(key)).toJsonValue()
     }
 
     override fun set(key: String, element: Any?) {
-        map[key] = wrap(element)
+        map[key] = unwrap(element)
     }
 
     /**
-     * Returns an optional value for the given [key] or [default] if
+     * Returns an option wrapped value for the given [key] or [default] if
      * the value is null or the [key] doesn't exist
-     *
-     * The [default] can be of any type and it will wrapped if needed
      */
-    fun opt(
-        key: String,
-        default: Any?
-    ): JsonValue {
-        val value = map[key]
-
-        if (value == null || value.isNull()) {
-            return wrap(default)
-        }
-
-        return value
+    fun opt(key: String, default: Any?): JsonValue {
+        return optValue(key, default).toJsonValue()
     }
 
     /**
-     * Returns the unwrapped value for the given [key]
+     * Returns the value for the given [key]
      *
      * @throws JsonException If the [key] doesn't exist
      */
     fun getValue(key: String): Any? {
-        return unwrap(get(key))
+        return map[key] ?: throw JsonException("Key '$key' was not found")
     }
 
     /**
-     * Returns the unwrapped optional value for the given [key] or [default] if the value
+     * Returns the optional value for the given [key] or [default] if the value
      * is null or if the [key] doesn't exist
+     *
+     * By default the [default] value is null
      */
     fun optValue(
         key: String,
-        default: Any?
+        default: Any? = null
     ): Any? {
-        return unwrap(opt(key, default))     //FIXME The default is wrapped and then again unwrapped
+        val value = map[key]
+
+        return if (value == null || value == "null") {
+            default
+        } else {
+            value
+        }
     }
 
     /**
-     * Returns whether or not this map is empty
+     * Returns whether or not this object is empty
      */
     fun isEmpty(): Boolean {
         return map.isEmpty()
@@ -144,11 +179,11 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     /**
-     * Removes the specified [key] and its corresponding value from this map
+     * Removes the specified [key] and its corresponding value from this object
      *
      * @throws JsonException if the [key] was not found
      */
-    fun remove(key: String): JsonValue {
+    fun remove(key: String): Any? {
         return map.remove(key) ?: throw JsonException("Key '$key' was not found")
     }
 
@@ -163,7 +198,7 @@ class JsonObject : Json {   //TODO Add value observer
      */
     fun remove(vararg path: Any) {
         val last = path.last()
-        var current = wrap(this)
+        var current = toJsonValue()
 
         for (i in 0 until path.lastIndex) {
             val key = path[i]
@@ -207,13 +242,13 @@ class JsonObject : Json {   //TODO Add value observer
      * Returns whether or not the given [value] is present
      */
     fun has(value: Any?): Boolean {
-        return map.containsValue(wrap(value))
+        return map.containsValue(unwrap(value))
     }
 
     /**
-     * Returns this [JsonObject] as a Map
+     * Returns a copy of the map used internally to implement this [JsonObject]
      */
-    fun toMap(): Map<String, JsonValue> {
+    fun toMap(): Map<String, Any?> {
         return map.toMap()
     }
 
@@ -227,7 +262,7 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     /**
-     * Returns an optional Int for the given [key] or [default]
+     * Returns an optional String for the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      *
      * By default the [default] value is an empty String
@@ -261,7 +296,6 @@ class JsonObject : Json {   //TODO Add value observer
         return opt(key, default).asNumber()
     }
 
-
     /**
      * Returns the [JsonObject] for the given [key]
      *
@@ -274,10 +308,12 @@ class JsonObject : Json {   //TODO Add value observer
     /**
      * Returns an optional [JsonObject] for the given [key] or [default]
      * if the value is null or the [key] doesn't exist
+     *
+     * By default the [default] value is null
      */
     fun optJsonObject(
         key: String,
-        default: JsonObject?
+        default: JsonObject? = null
     ): JsonObject? {
         return opt(key, default).asJsonObject()
     }
@@ -292,14 +328,14 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     /**
-     * Returns an optional String for the given [key] or [default]
+     * Returns an optional [JsonArray] for the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      *
-     * By default the [default] value is 0
+     * By default the [default] value is null
      */
     fun optJsonArray(
         key: String,
-        default: JsonArray?
+        default: JsonArray? = null
     ): JsonArray? {
         return opt(key, default).asJsonArray()
     }
@@ -470,10 +506,12 @@ class JsonObject : Json {   //TODO Add value observer
     /**
      * Returns an optional Char value for the given [key] or [default]
      * if the value is null or the [key] doesn't exist
+     *
+     * By default the [default] value is '\u0000'
      */
     fun optChar(
         key: String,
-        default: Char?
+        default: Char? = Char.MIN_VALUE
     ): Char? {
         return opt(key, default).asChar()
     }
@@ -493,19 +531,25 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * The [default] value can be a Date or any Number type
      *
-     * By default the [default] value is 0
-     *
-     * @throws JsonException If the default value is not a [Date] or a Number type
+     * By default the [default] value is 0 (1970-01-01)
      */
     fun optDate(
         key: String,
-        default: Any? = 0
+        default: Any? = 0   //FIXME Null doesn't work as the default value
     ): Date? {
+        val value = opt(key, default)
+
         return when (default) {
             is Date -> opt(key, default)
             is Number -> opt(key, Date(default.toLong()))
 
-            else -> throw JsonException("The default value must be either a Date or a Number type")
+            else -> {
+                if (default == null) {  //TODO Test this
+                    opt(key, null)
+                } else {
+                    throw JsonException("The default value must be either a Date or a Number type")
+                }
+            }
         }.asDate()
     }
 
@@ -527,9 +571,7 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * The [default] value can be a Date or any Number type
      *
-     * By default the [default] value is 0
-     *
-     * @throws JsonException If the default value is not a [Date] or a Number type
+     * By default the [default] value is 0 (1970-01-01)
      */
     fun optDate(
         key: String,
@@ -558,14 +600,12 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     /**
-     * Returns an optional [Date] saved as a timestamp, for the given [key] or [default]
+     * Returns an optional [Date] for the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      *
      * The [default] value can be a Date or any Number type
      *
-     * By default the [default] value is 0
-     *
-     * @throws JsonException If the default value is not a [Date] or a Number type
+     * By default the [default] value is 0 (1970-01-01)
      */
     fun optDate(
         key: String,
@@ -596,9 +636,7 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * The [default] value can be a [Calendar] or any Number type
      *
-     * By default the [default] value is 0
-     *
-     * @throws JsonException If the default value is not a [Calendar] or a Number type
+     * By default the [default] value is 0 (1970-01-01)
      */
     fun optCalendar(
         key: String,
@@ -630,9 +668,7 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * The [default] value can be a [Calendar] or any Number type
      *
-     * By default the [default] value is 0
-     *
-     * @throws JsonException If the default value is not a [Calendar] or a Number type
+     * By default the [default] value is 0 (1970-01-01)
      */
     fun optCalendar(
         key: String,
@@ -666,9 +702,7 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * The [default] value can be a [Calendar] or any Number type
      *
-     * By default the [default] value is 0
-     *
-     * @throws JsonException If the default value is not a [Calendar] or a Number type
+     * By default the [default] value is 0 (1970-01-01)
      */
     fun optCalendar(
         key: String,
@@ -716,10 +750,12 @@ class JsonObject : Json {   //TODO Add value observer
     /**
      * Returns an optional [BigDecimal] for the given [key] or [default]
      * if the value is null or the [key] doesn't exist
+     *
+     * By default the [default] value is 0
      */
     fun optBigDecimal(
         key: String,
-        default: BigDecimal?
+        default: BigDecimal? = BigDecimal(0)
     ): BigDecimal? {
         return opt(key, default).asBigDecimal()
     }
@@ -734,7 +770,7 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     /**
-     * Returns an optional [IntRange] for the given [key] or [default]
+     * Returns an optional [URL] for the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      */
     fun optURL(
@@ -775,47 +811,25 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     /**
-     * Returns the List of [JsonValue] for the given [key]
+     * Returns the List of Any? for the given [key]
      *
      * @throws JsonException If the given key doesn't exist
      */
-    fun getList(key: String): List<JsonValue> {
+    fun getList(key: String): List<Any?> {
         return get(key).asList()
     }
 
     /**
-     * Returns an optional List of [JsonValue] for the given [key] or [default]
+     * Returns an optional List of Any? values for the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      *
      * By default the [default] value is an empty list
      */
     fun optList(
         key: String,
-        default: List<JsonValue>? = listOf()
-    ): List<JsonValue>? {
-        return opt(key, default).asList()
-    }
-
-    /**
-     * Returns the List of unwrapped values for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    fun getValueList(key: String): List<Any?> {
-        return get(key).asValueList()
-    }
-
-    /**
-     * Returns an optional List of unwrapped values for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
-     */
-    fun optValueList(
-        key: String,
         default: List<Any?>? = emptyList()
     ): List<Any?>? {
-        return opt(key, default).asValueList()
+        return opt(key, default).asList()
     }
 
     /**
@@ -869,6 +883,19 @@ class JsonObject : Json {   //TODO Add value observer
      */
     fun getJsonObjectList(key: String): List<JsonObject> {
         return get(key).asJsonObjectList()
+    }
+
+    /**
+     * Returns an optional List of [JsonObject] for the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     *
+     * By default the [default] value is an empty list
+     */
+    fun optJsonObjectList(
+        key: String,
+        default: List<JsonObject>? = emptyList()
+    ): List<JsonObject>? {
+        return opt(key, default).asJsonObjectList()
     }
 
     /**
@@ -1298,7 +1325,7 @@ class JsonObject : Json {   //TODO Add value observer
      */
     inline fun <reified T> getList(
         key: String,
-        transform: (JsonValue) -> T
+        transform: (Any?) -> T
     ): List<T> {
         return get(key).asList(transform)
     }
@@ -1311,7 +1338,7 @@ class JsonObject : Json {   //TODO Add value observer
      */
     inline fun <reified T> optList(
         key: String,
-        transform: (JsonValue) -> T,
+        transform: (Any?) -> T,
         default: List<T>? = emptyList()
     ): List<T>? {
         return opt(key, default).asList(transform)

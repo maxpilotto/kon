@@ -15,6 +15,8 @@
  */
 package com.maxpilotto.kon
 
+import com.maxpilotto.kon.extensions.prettify
+import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
 import java.math.BigDecimal
@@ -24,21 +26,22 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * Wrapper for every Json value
+ * # JsonValue
  *
- * This can be any of the following types
- * + JsonArray
- * + JsonObject
- * + Boolean
- * + String
- * + Number (BigDecimal, Int, Short, Float, ...)
- * + Date/Calendar (stored as String or Long)
- * + Char (stored as Int or String)
- * + IntRange (stored as Int or String)
- * + URL (stored as String)
- * + Enum (stored as String)
- * + List
- * + Generic object (transform method must be implemented)
+ * Wrapper for any value stored in a JsonObject or JsonArray,
+ * this is used by the [JsonObject] and [JsonArray] get/set operators
+ * so accessing through your json is easier
+ *
+ * This will allow you to do things like this
+ *
+ * ```kotlin
+ *
+ * val dob = json["people"][0]["data"]["dob"].asDate()
+ *
+ * vs.
+ *
+ * val dob = (json.getJsonArray("people").getValue(0) as JsonObject).getJsonObject("data").getDate("dob")    //TODO Test this
+ * ```
  */
 class JsonValue : Json {
     /**
@@ -67,11 +70,11 @@ class JsonValue : Json {
     }
 
     override fun set(key: String, element: Any?) {
-        asJsonObject()[key] = wrap(element)
+        asJsonObject()[key] = element.toJsonValue()
     }
 
-    override fun set(index: Int, element: Any?): JsonValue {
-        return asJsonArray().set(index, wrap(element))
+    override fun set(index: Int, element: Any?): Any? {
+        return asJsonArray().set(index, element)
     }
 
     override fun toString(): String {
@@ -88,6 +91,10 @@ class JsonValue : Json {
         } else {
             other == content
         }
+    }
+
+    override fun prettify(): String {
+        return content.prettify()
     }
 
     /**
@@ -230,7 +237,7 @@ class JsonValue : Json {
      *
      * The value must be saved as a timestamp, either in a String or a Long
      */
-    fun asDate(): Date {
+    fun asDate(): Date {    //FIXME If the content is a Date this won't work, test it
         return Date(asLong())
     }
 
@@ -342,6 +349,16 @@ class JsonValue : Json {
     }
 
     /**
+     * Returns this value as an Object of type [T], the [transform] block
+     * is used to parse the value
+     *
+     * Note that this only works if the value is a [JsonObject]
+     */
+    inline fun <T> asObject(transform: (JsonObject) -> T): T {
+        return transform(asJsonObject())
+    }
+
+    /**
      * Returns this value as an Enum of type [T]
      *
      * The string value retrieved from the json will be capitalized by default,
@@ -358,35 +375,10 @@ class JsonValue : Json {
     }
 
     /**
-     * Returns this value as an Array of [T], using the [transform] block
-     * to parse the items
+     * Returns this value as a List of Any?
      */
-    inline fun <T> asList(transform: (JsonValue) -> T): List<T> {
-        return asJsonArray().toList(transform)
-    }
-
-    /**
-     * Returns this value as an Object of type [T], the [transform] block
-     * is used to parse the value
-     *
-     * Note that this only works if the value is a [JsonObject]
-     */
-    inline fun <T> asObject(transform: (JsonObject) -> T): T {
-        return transform(asJsonObject())
-    }
-
-    /**
-     * Returns this value as a List of wrapped values
-     */
-    fun asList(): List<JsonValue> {
+    fun asList(): List<Any?> {
         return asJsonArray().toList()
-    }
-
-    /**
-     * Returns this value as a List of unwrapped values
-     */
-    fun asValueList(): List<Any?> {
-        return asJsonArray().toValueList()
     }
 
     /**
@@ -533,6 +525,14 @@ class JsonValue : Json {
      */
     fun asURLList(): List<URL> {
         return asJsonArray().toURLList()
+    }
+
+    /**
+     * Returns this value as an Array of [T], using the [transform] block
+     * to parse the items
+     */
+    inline fun <T> asList(transform: (Any?) -> T): List<T> {
+        return asJsonArray().toList(transform)
     }
 
     /**

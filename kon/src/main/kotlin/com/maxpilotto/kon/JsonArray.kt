@@ -15,14 +15,47 @@
  */
 package com.maxpilotto.kon
 
+import com.maxpilotto.kon.extensions.prettify
+import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
 import java.math.BigDecimal
 import java.net.URL
 import java.text.DateFormat
 import java.util.*
 
+/**
+ * # JsonArray
+ *
+ * Representation of a JSON array, which is implemented using a mutable list of Any?
+ *
+ * The class does implement all of the methods of the [MutableList] interface
+ *
+ * ## Adding elements
+ *
+ * Elements can be added using the [add] and [addAll] methods or the [plusAssign] operator
+ *
+ * The methods for adding a single value can also work with a [JsonValue], this will be
+ * unwrapped and added to the array
+ *
+ * ## Removing elements
+ *
+ * Elements can be removed using the [remove], [removeAt], [removeAll] methods or the [minusAssign] operator
+ *
+ * The [remove] and [minusAssign] methods that takes a single value will do
+ * any unwrapping of the value if necessary
+ *
+ * ## Get/Set operators
+ *
+ * Both the [get] and [set] will operate with [JsonValue], in the last case you don't necessary need
+ * to pass it a [JsonValue], the value will be unwrapped anyway
+ *
+ * ## Other method that can work with [JsonValue]
+ *
+ * + [contains]
+ * + [indexOf]
+ */
 class JsonArray : Json, MutableList<Any?> {
-    private val list: MutableList<JsonValue>
+    private val list: MutableList<Any?>
 
     /**
      * Number of elements in this [JsonArray]
@@ -43,65 +76,73 @@ class JsonArray : Json, MutableList<Any?> {
     /**
      * Clones the given [jsonArray]
      */
-    constructor(jsonArray: JsonArray) : this(jsonArray.list)
+    constructor(jsonArray: JsonArray) : this(jsonArray.toList())
 
     /**
      * Creates a JsonArray from the given [collection]
+     *
+     * This won't work unwrap the values if they're [JsonValue] instances
      */
     constructor(collection: Collection<Any?>) {
-        this.list = wrap(collection).toMutableList()    //TODO Recursive wrapping might be needed
+        this.list = collection.toMutableList()
     }
 
     override fun toString(): String {
-        return list.joinToString(",", "[", "]")
+        return prettify()
+    }
+
+    override fun prettify(): String {
+        return list.joinToString(",", "[", "]", transform = {
+            it.prettify()   //TODO Check if this works with JsonArrays and JsonObjects
+        })
     }
 
     override fun get(index: Int): JsonValue {
-        return list[index]
+        return list[index].toJsonValue()
     }
 
-    override fun set(index: Int, element: Any?): JsonValue {
-        return list.set(index, wrap(element))
+    override fun set(index: Int, element: Any?): Any? {
+        return list.set(index, unwrap(element))
     }
 
     override fun contains(element: Any?): Boolean {
-        return list.contains(wrap(element))
+        return list.contains(unwrap(element))
     }
 
     override fun containsAll(elements: Collection<Any?>): Boolean {
-        return list.containsAll(wrap(elements))
+        return list.containsAll(elements)
     }
 
     override fun indexOf(element: Any?): Int {
-        return list.indexOf(wrap(element))
+        return list.indexOf(unwrap(element))
     }
 
     override fun isEmpty(): Boolean {
         return size == 0
     }
 
-    override fun iterator(): MutableIterator<JsonValue> {
+    override fun iterator(): MutableIterator<Any?> {
         return list.iterator()
     }
 
     override fun lastIndexOf(element: Any?): Int {
-        return list.lastIndexOf(wrap(element))
+        return list.lastIndexOf(element)
     }
 
     override fun add(element: Any?): Boolean {
-        return list.add(wrap(element))
+        return list.add(unwrap(element))
     }
 
     override fun add(index: Int, element: Any?) {
-        return list.add(index, wrap(element))
+        return list.add(index, unwrap(element))
     }
 
     override fun addAll(index: Int, elements: Collection<Any?>): Boolean {
-        return list.addAll(index, wrap(elements))
+        return list.addAll(index, elements)
     }
 
     override fun addAll(elements: Collection<Any?>): Boolean {
-        return addAll(wrap(elements))
+        return addAll(elements)
     }
 
     override fun clear() {
@@ -109,19 +150,19 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun listIterator(): MutableListIterator<Any?> {
-        return toValueList().toMutableList().listIterator()
+        return list.listIterator()
     }
 
     override fun listIterator(index: Int): MutableListIterator<Any?> {
-        return toValueList().toMutableList().listIterator(index)
+        return list.listIterator(index)
     }
 
     override fun remove(element: Any?): Boolean {
-        return list.remove(wrap(element))
+        return list.remove(unwrap(element))
     }
 
     override fun removeAll(elements: Collection<Any?>): Boolean {
-        return list.removeAll(wrap(elements))
+        return list.removeAll(elements)
     }
 
     override fun removeAt(index: Int): Any? {
@@ -129,43 +170,49 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun retainAll(elements: Collection<Any?>): Boolean {
-        return list.retainAll(wrap(elements))
+        return list.retainAll(elements)
     }
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<Any?> {
-        return toValueList().subList(fromIndex, toIndex).toMutableList()
+        return list.subList(fromIndex, toIndex)
+    }
+
+    operator fun plusAssign(element: Any?) {
+        add(unwrap(element))
+    }
+
+    operator fun plusAssign(elements: Collection<Any?>) {
+        addAll(elements)
+    }
+
+    operator fun minusAssign(element: Any?) {
+        remove(element)
+    }
+
+    operator fun minusAssign(elements: Collection<Any?>) {
+        removeAll(elements)
+    }
+
+    /**
+     * Pops the last item of this [JsonArray] and returns the same instance
+     */
+    operator fun dec(): JsonArray {
+        return also {
+            it.removeAt(lastIndex)  //TODO Should I return a clone and leave the original unaltered?
+        }
     }
 
     /**
      * Returns the unwrapped value at the given [index]
      */
     fun getValue(index: Int): Any? {
-        return list[index].content
+        return list[index]
     }
 
     /**
-     * Returns an iterator that iterates through the unwrapped values of this [JsonArray]
-     *
-     * The [iterator] method will return an iterator of [JsonValue], this instead returns
-     * an iterator of [Any] which are the unwrapped values inside each of the [JsonValue]
+     * Returns a copy of the list used internally to implement this [JsonArray]
      */
-    fun values(): MutableIterator<Any?> {
-        return toValueList().toMutableList().iterator()
-    }
-
-    /**
-     * Returns a List containing all of the unwrapped values of this [JsonArray]
-     */
-    fun toValueList(): List<Any?> {
-        return List(size) {
-            list[it].content
-        }
-    }
-
-    /**
-     * Returns a List containing all of the values of this [JsonArray]
-     */
-    fun toList(): List<JsonValue> {
+    fun toList(): List<Any?> {
         return list.toList()
     }
 
@@ -174,7 +221,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toStringList(): List<String> {
         return List(size) {
-            list[it].asString()
+            list[it].toJsonValue().asString()
         }
     }
 
@@ -183,7 +230,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toNumberList(): List<Number> {
         return List(size) {
-            list[it].asNumber()
+            list[it].toJsonValue().asNumber()
         }
     }
 
@@ -192,7 +239,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toJsonObjectList(): List<JsonObject> {
         return List(size) {
-            list[it].asJsonObject()
+            list[it].toJsonValue().asJsonObject()
         }
     }
 
@@ -201,7 +248,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toIntList(): List<Int> {
         return List(size) {
-            list[it].asInt()
+            list[it].toJsonValue().asInt()
         }
     }
 
@@ -210,7 +257,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toLongList(): List<Long> {
         return List(size) {
-            list[it].asLong()
+            list[it].toJsonValue().asLong()
         }
     }
 
@@ -219,7 +266,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toBooleanList(): List<Boolean> {
         return List(size) {
-            list[it].asBoolean()
+            list[it].toJsonValue().asBoolean()
         }
     }
 
@@ -228,7 +275,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDoubleList(): List<Double> {
         return List(size) {
-            list[it].asDouble()
+            list[it].toJsonValue().asDouble()
         }
     }
 
@@ -237,7 +284,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toFloatList(): List<Float> {
         return List(size) {
-            list[it].asFloat()
+            list[it].toJsonValue().asFloat()
         }
     }
 
@@ -246,7 +293,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toByteList(): List<Byte> {
         return List(size) {
-            list[it].asByte()
+            list[it].toJsonValue().asByte()
         }
     }
 
@@ -255,7 +302,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toShortList(): List<Short> {
         return List(size) {
-            list[it].asShort()
+            list[it].toJsonValue().asShort()
         }
     }
 
@@ -264,7 +311,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCharList(): List<Char> {
         return List(size) {
-            list[it].asChar()
+            list[it].toJsonValue().asChar()
         }
     }
 
@@ -273,7 +320,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDateList(): List<Date> {
         return List(size) {
-            list[it].asDate()
+            list[it].toJsonValue().asDate()
         }
     }
 
@@ -282,7 +329,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDateList(dateFormat: DateFormat): List<Date> {
         return List(size) {
-            list[it].asDate(dateFormat)
+            list[it].toJsonValue().asDate(dateFormat)
         }
     }
 
@@ -294,7 +341,7 @@ class JsonArray : Json, MutableList<Any?> {
         locale: Locale = Locale.getDefault()
     ): List<Date> {
         return List(size) {
-            list[it].asDate(format, locale)
+            list[it].toJsonValue().asDate(format, locale)
         }
     }
 
@@ -303,7 +350,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCalendarList(): List<Calendar> {
         return List(size) {
-            list[it].asCalendar()
+            list[it].toJsonValue().asCalendar()
         }
     }
 
@@ -312,7 +359,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCalendarList(dateFormat: DateFormat): List<Calendar> {
         return List(size) {
-            list[it].asCalendar(dateFormat)
+            list[it].toJsonValue().asCalendar(dateFormat)
         }
     }
 
@@ -324,7 +371,7 @@ class JsonArray : Json, MutableList<Any?> {
         locale: Locale = Locale.getDefault()
     ): List<Calendar> {
         return List(size) {
-            list[it].asCalendar(format, locale)
+            list[it].toJsonValue().asCalendar(format, locale)
         }
     }
 
@@ -333,7 +380,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toRangeList(): List<IntRange> {
         return List(size) {
-            list[it].asRange()
+            list[it].toJsonValue().asRange()
         }
     }
 
@@ -342,7 +389,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toBigDecimalList(): List<BigDecimal> {
         return List(size) {
-            list[it].asBigDecimal()
+            list[it].toJsonValue().asBigDecimal()
         }
     }
 
@@ -351,20 +398,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toURLList(): List<URL> {
         return List(size) {
-            list[it].asURL()
-        }
-    }
-
-    /**
-     * Returns this [JsonArray] as a List of Enum of type [T]
-     */
-    inline fun <reified T : Enum<T>> toEnumList(
-        transform: (String) -> String = { it.capitalize() }
-    ): List<T> {
-        val list = toList()
-
-        return List(size) {
-            list[it].asEnum<T>(transform)
+            list[it].toJsonValue().asURL()
         }
     }
 
@@ -372,11 +406,24 @@ class JsonArray : Json, MutableList<Any?> {
      * Returns this [JsonArray] as a List of [T], which values
      * are parsed using the [transform] block
      */
-    inline fun <T> toList(transform: (JsonValue) -> T): List<T> {
+    inline fun <T> toList(transform: (Any?) -> T): List<T> {
         val list = toList()
 
         return List(size) {
             transform(list[it])
+        }
+    }
+
+    /**
+     * Returns this [JsonArray] as a List of Enum of type [T]
+     */
+    inline fun <reified T : Enum<T>> toEnumList(    //TODO Improve support for JAva with @JavaOverloads
+        transform: (String) -> String = { it.capitalize() }
+    ): List<T> {
+        val list = toList()
+
+        return List(size) {
+            list[it].toJsonValue().asEnum<T>(transform)
         }
     }
 
