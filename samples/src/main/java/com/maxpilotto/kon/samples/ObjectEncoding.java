@@ -1,7 +1,7 @@
 package com.maxpilotto.kon.samples;
 
-import com.maxpilotto.kon.samples.parsing.Author;
-import com.maxpilotto.kon.samples.parsing.AuthorKt;
+import com.maxpilotto.kon.samples.encoding.Author;
+import com.maxpilotto.kon.samples.encoding.AuthorKt;
 
 public class ObjectEncoding {
     public static void main(String[] args) {

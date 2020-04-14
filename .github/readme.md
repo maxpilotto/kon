@@ -2,14 +2,24 @@
 KON (improperly Kotlin Object Notation) is a JSON parsing library written in Kotlin that uses Kotlin's features
 
 ## Index
-+ Parsing
-    + [Basic parsing](#basic-parsing)
-    + [Inline object parsing](#inline-object-parsing)
-    + [Automatic object parsing](#automatic-object-parsing)
++ Encoding
+    + [Basic](#basic-encoding)
+    + [Inline](#inline-encoding)
+    + [Automatic](#automatic-encoding)
++ Decoding    
+    + [Basic](#basic-decoding)
+    + [Inline](#basic-decoding)
+    + [Automatic](#basic-decoding)
 + Operators and JsonValue
     + [get/set operators](#get/set-operators)
 + Networking
     + [Basic fetch](#basic-fetch)
+    + [Basic service](#basic-service)
+    + [Full service](#full-service)
++ Annotations
+    + [Ignore](#ignore)
+    + [Property](#property)
+    + [Optional](#optional)
 
 ## Getting started
 In your project's build.gradle
@@ -28,77 +38,114 @@ dependencies {
 }
 ```
 
-## Quick overview
+### Basic encoding
+//TODO
 
-#### Basic parsing
+### Inline encoding
+//TODO
+
+### Automatic encoding
+The `Codable` annotation will automatically generated an extension for the marked class, which can be used to encode the object
+```kotlin
+@Codable
+data class Author(
+    val firstName: String,
+    val lastName: String,
+    val year: Int
+)
+
+val author = Author("George", "Orwell", 1903)
+val json = author.encode()
+```
+
+## Basic decoding
 
 ```kotlin
-val string = """
+val json = JsonObject(
+    """
     {
-        "firstName": "John",
-        "lastName": "Doe",
-        "dob": "1987/09/25"
+        "firstName": "Yui",
+        "lastName": "Hirasawa",
+        "dob": "1991/11/27"
     }
-"""
-val json = JsonObject(string)
+    """
+)
 
 println(json.getString("firstName"))
 println(json.getDate("dob", "yyyy/MM/dd"))
 ```
 
-#### Inline object parsing
+## Inline decoding
 ```kotlin
 data class Address(
-    val street: String,
-    val number: Int,
-    val country: String
+    val country: String,
+    val city: String
 )
 
-val json = JsonObject("""
+val json = JsonObject(
+    """
     {
-        "firstName": "John",
-        "lastName": "Doe",
+        "firstName": "Mio",
+        "lastName": "Akiyama",
         "address": {
-            "street": "Downing Street",
-            "number": 10,
-            "country": "England"
+            "country": "Japan",
+            "city": "Kyoto"
         }
     }
-""")
-val address = json["address"].asObject { 
+    """
+)
+val address = json["address"].asObject {
     Address(
-        it.getString("street"),
-        it.getInt("number"),
-        it.getString("country")
+        it.getString("country"),
+        it.getString("city")
     )
 }
 ```
 
-#### Automatic object parsing
+## Automatic decoding
 //TODO
 
-#### Get/Set operators
-
+### Get/Set operators
 ```kotlin
-val json = JsonObject("""
+val json = JsonObject(
+    """
     {
-        "firstName": "John",
-        "lastName": "Doe",
+        "firstName": "Azusa",
+        "lastName": "Nakano",
         "addresses": [
             {
-                "street": "Downing Street",
-                "number": 10,
-                "country": "England"
+                "country": "Japan",
+                "city": "Kyoto"
             }
         ]
     }
-""")
+    """
+)
 
 println(json["firstName"])
-println(json["addresses"][0]["street"])
+println(json["addresses"][0]["city"])
 ```
 
-#### Basic fetch
+Comparison with and without the Operators + JsonValue
+```kotlin
+val json = JsonObject(
+    """
+    {
+        "people": [
+            {
+                "data": {
+                    "dob": 1586723311
+                }
+            }
+        ]
+    }
+    """.trimIndent()
+)
+val with = json["people"][0]["data"]["dob"].asDate()
+val without = (json.getJsonArray("people").getValue(0) as JsonObject).getJsonObject("data").getDate("dob")
+```
+
+### Basic fetch
 ```kotlin
 // Sync call
 val todos = JsonService.fetchArray("https://apiservice.com/todos")
@@ -109,5 +156,5 @@ JsonService.fetchArray("https://apiservice.com/todos") {
 }
 ```
 
-#### Fetch and parse
+### Fetch and parse
 //TODO

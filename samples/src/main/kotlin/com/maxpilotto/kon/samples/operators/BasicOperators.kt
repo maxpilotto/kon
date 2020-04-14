@@ -17,17 +17,16 @@ package com.maxpilotto.kon.samples.operators
 
 import com.maxpilotto.kon.JsonObject
 
-fun main() {    //TODO Rename all tests
+fun main() {
     val json = JsonObject(
         """
         {
-            "firstName": "John",
-            "lastName": "Doe",
+            "firstName": "Azusa",
+            "lastName": "Nakano",
             "addresses": [
                 {
-                    "street": "Downing Street",
-                    "number": 10,
-                    "country": "England"
+                    "country": "Japan",
+                    "city": "Kyoto"
                 }
             ]
         }
@@ -35,5 +34,5 @@ fun main() {    //TODO Rename all tests
     )
 
     println(json["firstName"])
-    println(json["addresses"][0]["street"])
+    println(json["addresses"][0]["city"])
 }

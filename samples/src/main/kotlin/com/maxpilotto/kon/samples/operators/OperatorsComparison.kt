@@ -16,6 +16,9 @@ fun main() {
         }
         """.trimIndent()
     )
-    val dob1 = json["people"][0]["data"]["dob"].asDate()
-    val dob2 = (json.getJsonArray("people").getValue(0) as JsonObject).getJsonObject("data").getDate("dob")
+    val with = json["people"][0]["data"]["dob"].asDate()
+    val without = (json.getJsonArray("people").getValue(0) as JsonObject).getJsonObject("data").getDate("dob")
+
+    println(with)
+    println(without)
 }

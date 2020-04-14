@@ -13,35 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maxpilotto.kon.samples.parsing
+package com.maxpilotto.kon.samples.decoding
 
 import com.maxpilotto.kon.JsonObject
-
-data class Address(
-    val street: String,
-    val number: Int,
-    val country: String
-)
 
 fun main() {
     val json = JsonObject(
         """
         {
-            "firstName": "John",
-            "lastName": "Doe",
-            "address": {
-                "street": "Downing Street",
-                "number": 10,
-                "country": "England"
-            }
+            "firstName": "Yui",
+            "lastName": "Hirasawa",
+            "dob": "1991/11/27"
         }
         """
     )
-    val address = json["address"].asObject {
-        Address(
-            it.getString("street"),
-            it.getInt("number"),
-            it.getString("country")
-        )
-    }
+
+    println(json.getString("firstName"))
+    println(json.getDate("dob", "yyyy/MM/dd"))
 }

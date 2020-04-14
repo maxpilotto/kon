@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maxpilotto.kon.samples.parsing
+package com.maxpilotto.kon.samples.encoding
 
 import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.annotations.Codable
@@ -22,13 +22,6 @@ import java.util.*
 data class Genre(
     val id: Int,
     val name: String
-)
-
-@Codable
-data class Author(
-    val firstName: String,
-    val lastName: String,
-    val year: Int
 )
 
 @Codable
