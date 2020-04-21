@@ -248,8 +248,15 @@ class JsonObject : Json {   //TODO Add value observer
     /**
      * Returns a copy of the map used internally to implement this [JsonObject]
      */
-    fun toMap(): Map<String, Any?> {
+    fun toMap(): Map<String,Any?> {
         return map.toMap()
+    }
+
+    /**
+     * Returns a copy of the map used internally, casted as the given type
+     */
+    fun <K,V> toTypedMap(): Map<K,V> {
+        return toMap() as Map<K, V>
     }
 
     /**

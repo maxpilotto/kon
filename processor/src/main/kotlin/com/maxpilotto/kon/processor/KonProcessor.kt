@@ -15,7 +15,8 @@
  */
 package com.maxpilotto.kon.processor
 
-import com.maxpilotto.kon.JsonObject
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
 import java.io.File
 import javax.annotation.processing.AbstractProcessor
@@ -29,6 +30,9 @@ import javax.lang.model.type.TypeMirror
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 import kotlin.reflect.KClass
+import javax.lang.model.element.ElementKind
+import javax.xml.validation.TypeInfoProvider
+
 
 /**
  * Base Processor class used to process Kon's annotations
@@ -57,6 +61,31 @@ abstract class KonProcessor : AbstractProcessor() {
     }
 
     /**
+     * Returns whether or not the given [element] has the given [annotation]
+     */
+    protected fun <A : Annotation> hasAnnotation(element: Element, annotation: KClass<A>): Boolean {
+        return element.getAnnotation(annotation.java) != null ||
+                getTypeElement(element).getAnnotation(annotation.java) != null
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] has the given [annotation]
+     */
+    protected fun <A : Annotation> hasAnnotation(typeMirror: TypeMirror, annotation: KClass<A>): Boolean {
+        return typeMirror.getAnnotation(annotation.java) != null ||
+                getTypeElement(typeMirror).getAnnotation(annotation.java) != null
+    }
+
+    /**
+     * Returns whether or not the given [element] is a Kotlin class
+     *
+     * This will look for the [Metadata] annotation
+     */
+    protected fun isKotlinClass(element: Element): Boolean {
+        return hasAnnotation(getTypeElement(element), Metadata::class)
+    }
+
+    /**
      * Returns the given [element] as a [TypeElement]
      */
     protected fun getTypeElement(element: Element): TypeElement {
@@ -66,8 +95,15 @@ abstract class KonProcessor : AbstractProcessor() {
     /**
      * Returns the given [typeMirror] as a [TypeElement]
      */
-    protected fun getTypeElement(typeMirror: TypeMirror): TypeElement {
+    protected fun getTypeElement(typeMirror: TypeMirror): TypeElement { //TODO Replace all elements and typeMirrors with AnnotatedConstruct
         return typeUtils.asElement(typeMirror) as TypeElement
+    }
+
+    /**
+     * Returns the [TypeName] of the given [typeMirror]'s Companion object
+     */
+    protected fun getCompanionObject(typeMirror: TypeMirror): TypeName {
+        return ClassName.bestGuess("$typeMirror.Companion")
     }
 
     /**
@@ -84,6 +120,94 @@ abstract class KonProcessor : AbstractProcessor() {
      */
     protected fun isString(typeMirror: TypeMirror): Boolean {
         return isSubclass(typeMirror, String::class.java)
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] is an Int
+     *
+     * This will check for both Int (kotlin) and int/Integer (java)
+     */
+    protected fun isInt(typeMirror: TypeMirror): Boolean {
+        return typeMirror.kind == TypeKind.INT ||
+                isSubclass(typeMirror, Int::class) ||
+                isSubclass(typeMirror, java.lang.Integer::class)
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] is a Long
+    *
+    * This will check for both Long (kotlin) and long/Long (java)
+    */
+    protected fun isLong(typeMirror: TypeMirror): Boolean {
+        return typeMirror.kind == TypeKind.LONG ||
+                isSubclass(typeMirror, Long::class) ||
+                isSubclass(typeMirror, java.lang.Long::class)
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] is a Boolean
+     *
+     * This will check for both Boolean (kotlin) and bool/Boolean (java)
+     */
+    protected fun isBoolean(typeMirror: TypeMirror): Boolean {
+        return typeMirror.kind == TypeKind.BOOLEAN ||
+                isSubclass(typeMirror, Boolean::class) ||
+                isSubclass(typeMirror, java.lang.Boolean::class)
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] is a Double
+     *
+     * This will check for both Double (kotlin) and double/Double (java)
+     */
+    protected fun isDouble(typeMirror: TypeMirror): Boolean {
+        return typeMirror.kind == TypeKind.DOUBLE ||
+                isSubclass(typeMirror, Double::class) ||
+                isSubclass(typeMirror, java.lang.Double::class)
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] is a Float
+     *
+     * This will check for both Float (kotlin) and float/Float (java)
+     */
+    protected fun isFloat(typeMirror: TypeMirror): Boolean {
+        return typeMirror.kind == TypeKind.FLOAT ||
+                isSubclass(typeMirror, Float::class) ||
+                isSubclass(typeMirror, java.lang.Float::class)
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] is a Byte
+     *
+     * This will check for both Byte (kotlin) and byte/Byte (java)
+     */
+    protected fun isByte(typeMirror: TypeMirror): Boolean {
+        return typeMirror.kind == TypeKind.BYTE ||
+                isSubclass(typeMirror, Byte::class) ||
+                isSubclass(typeMirror, java.lang.Byte::class)
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] is a Short
+     *
+     * This will check for both Short (kotlin) and short/Short (java)
+     */
+    protected fun isShort(typeMirror: TypeMirror): Boolean {
+        return typeMirror.kind == TypeKind.SHORT ||
+                isSubclass(typeMirror, Short::class) ||
+                isSubclass(typeMirror, java.lang.Short::class)
+    }
+
+    /**
+     * Returns whether or not the given [typeMirror] is a Char
+     *
+     * This will check for both Char (kotlin) and char/Character (java)
+     */
+    protected fun isChar(typeMirror: TypeMirror): Boolean {
+        return typeMirror.kind == TypeKind.CHAR ||
+                isSubclass(typeMirror, Char::class) ||
+                isSubclass(typeMirror, java.lang.Character::class)
     }
 
     /**
@@ -110,6 +234,13 @@ abstract class KonProcessor : AbstractProcessor() {
     }
 
     /**
+     * Returns whether or not the given [typeMirror] is an Enum
+     */
+    protected fun isEnum(typeMirror: TypeMirror): Boolean {
+        return isSubclass(typeMirror, Enum::class)
+    }
+
+    /**
      * Returns whether or not the given [typeMirror] is a subclass of the given
      * [base] class
      */
@@ -130,6 +261,14 @@ abstract class KonProcessor : AbstractProcessor() {
     }
 
     /**
+     * Returns whether or not the given [typeMirror] is a subclass of the given
+     * [base] class
+     */
+    protected fun isSubclass(typeMirror: TypeMirror, base: KClass<*>): Boolean {
+        return isSubclass(typeMirror, base.java)
+    }
+
+    /**
      * Returns the component type of the given [typeMirror] in case it is an Array or
      * a Collection, otherwise it returns null
      */
@@ -142,14 +281,35 @@ abstract class KonProcessor : AbstractProcessor() {
         }
     }
 
+    /**
+     * Returns whether the given [element] has a companion object or not
+     */
+    protected fun hasCompanion(element: Element): Boolean {
+        return element.enclosedElements.any { it.simpleName.toString() == "Companion" }
+    }
+
+    /**
+     * Loops through all the properties of the given [element] that are [ElementKind.FIELD]
+     * and are not the Companion object
+     */
+    protected inline fun getProperties(
+        element: Element,
+        block: (prop: Element, name: String, type: TypeMirror, isLast: Boolean) -> Unit
+    ) {
+        val elements = element.enclosedElements.filter {
+            it.kind == ElementKind.FIELD && it.simpleName.toString() != "Companion"
+        }
+
+        for ((i, prop) in elements.withIndex()) {
+            val name = prop.simpleName.toString()
+            val type = prop.asType()
+            val last = i == elements.lastIndex
+
+            block(prop, name, type, last)
+        }
+    }
+
     companion object {
         val OPTIONAL_ANY = Any::class.asTypeName().copy(true)
-        val OPTIONAL_OBJECT = JsonObject::class.asTypeName().copy(true)
-
-        private val log = File("processor_log.log")
-
-        fun logg(any: Any?) {
-            log.appendText(any.toString() + "\n")
-        }
     }
 }
