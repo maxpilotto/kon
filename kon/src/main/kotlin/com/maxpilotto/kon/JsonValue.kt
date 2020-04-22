@@ -87,7 +87,13 @@ class JsonValue : Json {
 
     override fun equals(other: Any?): Boolean {
         return if (other is JsonValue) {
-            other.content == content
+            if ((other.content == null && content == "null") ||
+                (other.content == "null" && content == null)
+            ) {
+                true
+            } else {
+                other.content == content
+            }
         } else {
             other == content
         }
