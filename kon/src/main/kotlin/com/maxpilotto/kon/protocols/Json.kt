@@ -79,5 +79,8 @@ abstract class Json {
      */
     //TODO Add indent option
     //TODO Add dateFormat, so all dates can print accordingly
+    //TODO Add params
+    // showType, shows the type of the property
+    // useBraces, shows {properties} instead of JsonObject(properties), enabled by default
     abstract fun prettify(): String
 }

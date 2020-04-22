@@ -2,24 +2,28 @@
 KON (improperly Kotlin Object Notation) is a JSON parsing library written in Kotlin that uses Kotlin's features
 
 ## Index
-+ Encoding
-    + [Basic](#basic-encoding)
-    + [Inline](#inline-encoding)
-    + [Automatic](#automatic-encoding)
-+ Decoding    
-    + [Basic](#basic-decoding)
-    + [Inline](#basic-decoding)
-    + [Automatic](#basic-decoding)
-+ Operators and JsonValue
-    + [get/set operators](#get/set-operators)
-+ Networking
-    + [Basic fetch](#basic-fetch)
-    + [Basic service](#basic-service)
-    + [Full service](#full-service)
-+ Annotations
-    + [Ignore](#ignore)
-    + [Property](#property)
-    + [Optional](#optional)
+
++ [Getting started](#getting-started)
++ [Supported types](#supported-types)
++ Usage
+    + Encoding
+        + [Basic](#basic-encoding)
+        + [Inline](#inline-encoding)
+        + [Automatic](#automatic-encoding)
+    + Decoding    
+        + [Basic](#basic-decoding)
+        + [Inline](#basic-decoding)
+        + [Automatic](#basic-decoding)
+    + Operators and JsonValue
+        + [get/set operators](#get/set-operators)
+    + Networking
+        + [Basic fetch](#basic-fetch)
+        + [Basic service](#basic-service)
+        + [Full service](#full-service)
+    + Annotations
+        + [Ignore](#ignore)
+        + [Property](#property)
+        + [Optional](#optional)
 
 ## Getting started
 In your project's build.gradle
@@ -38,13 +42,30 @@ dependencies {
 }
 ```
 
-### Basic encoding
+## Supported types
+
+The following is a table showing the supported types, how they're stored inside a JSON String and how they're stored inside a `JsonObject`
+
+| Type | Json | JsonObject | Json storing examples |
+| --- | --- | --- | --- |
+| String | String, Any | String, Any | "hello", 1, 0.0 |
+| Number (Int, Char, ..)  | String, Number | String, Number | 1, 2, 0.0, "3" |
+| Boolean | String, Number | String, Number, Boolean | "true", "false" |
+| Calendar/Date | String, Number (timestamp) | String, Number (timestamp), Date, Calendar | "1587497556000", 1587497556000, "2020-04-20" |
+| IntRange | String, Number | String, Number, IntRange | "0..20", "20", 20 |
+| BigDecimal | String, Number | String, Number, BigDecimal | "0.000003", 0.000003 |
+| URL | String | String, URL | "https://www.google.com" |
+| Enum | String, Number | String, Number, Enum | 1, "0", "Value1", "VALUE_1" | 
+
+## Usage
+
+#### Basic encoding
 //TODO
 
-### Inline encoding
+#### Inline encoding
 //TODO
 
-### Automatic encoding
+#### Automatic encoding
 The `Codable` annotation will automatically generated an extension for the marked class, which can be used to encode the object
 ```kotlin
 @Codable
@@ -58,7 +79,7 @@ val author = Author("George", "Orwell", 1903)
 val json = author.encode()
 ```
 
-## Basic decoding
+#### Basic decoding
 
 ```kotlin
 val json = JsonObject(
@@ -75,7 +96,7 @@ println(json.getString("firstName"))
 println(json.getDate("dob", "yyyy/MM/dd"))
 ```
 
-## Inline decoding
+#### Inline decoding
 ```kotlin
 data class Address(
     val country: String,
@@ -102,10 +123,10 @@ val address = json["address"].asObject {
 }
 ```
 
-## Automatic decoding
+#### Automatic decoding
 //TODO
 
-### Get/Set operators
+#### Get/Set operators
 ```kotlin
 val json = JsonObject(
     """
@@ -145,7 +166,7 @@ val with = json["people"][0]["data"]["dob"].asDate()
 val without = (json.getJsonArray("people").getValue(0) as JsonObject).getJsonObject("data").getDate("dob")
 ```
 
-### Basic fetch
+#### Basic fetch
 ```kotlin
 // Sync call
 val todos = JsonService.fetchArray("https://apiservice.com/todos")
@@ -156,5 +177,5 @@ JsonService.fetchArray("https://apiservice.com/todos") {
 }
 ```
 
-### Fetch and parse
+#### Fetch and parse
 //TODO

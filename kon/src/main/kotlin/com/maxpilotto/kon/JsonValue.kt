@@ -118,234 +118,163 @@ class JsonValue : Json {
      * then the [toString] method will be called
      */
     fun asString(): String {
-        return if (content is String) {
-            content as String
-        } else {
-            content.toString()
-        }
+        return cast(content)
     }
 
     /**
      * Returns this value as a generic Number
-     *
-     * If the value is not a Number, the method will try to parse it using the
-     * result of the [toString] call on the [content]
      */
     fun asNumber(): Number {
-        return when (content) {
-            is Number -> content as Number
-            is String -> try {
-                BigDecimal(content.toString())
-            } catch (e: Exception) {
-                throw JsonException("Cannot parse value as Number: ${e.message}")
-            }
-
-            else -> throw JsonException("Value is not a Number")
-        }
+        return cast(content)
     }
 
     /**
      * Returns this value as a JsonObject
      */
     fun asJsonObject(): JsonObject {
-        require(content is JsonObject) {
-            JsonException("Value is not a JsonObject")
-        }
-
-        return content as JsonObject
+        return cast(content)
     }
 
     /**
      * Returns this value as a JsonArray
      */
     fun asJsonArray(): JsonArray {
-        require(content is JsonArray) {
-            JsonException("Value is not a JsonArray")
-        }
-
-        return content as JsonArray
+        return cast(content)
     }
 
     /**
      * Returns this value as an Int
      */
     fun asInt(): Int {
-        return asNumber().toInt()
+        return cast(content)
     }
 
     /**
      * Returns this value as an Long
      */
     fun asLong(): Long {
-        return asNumber().toLong()
+        return cast(content)
     }
 
     /**
      * Returns this value as a Boolean
      */
     fun asBoolean(): Boolean {
-        require(content is Boolean || content is String || content is Number) {
-            JsonException("Value is not a Boolean or Number")
-        }
-
-        return if (content is Boolean) {
-            content as Boolean
-        } else {
-            asInt() != 0
-        }
+        return cast(content)
     }
 
     /**
      * Returns this value as a Double
      */
     fun asDouble(): Double {
-        return asNumber().toDouble()
+        return cast(content)
     }
 
     /**
      * Returns this value as a Float
      */
     fun asFloat(): Float {
-        return asNumber().toFloat()
+        return cast(content)
     }
 
     /**
      * Returns this value as a Byte
      */
     fun asByte(): Byte {
-        return asNumber().toByte()
+        return cast(content)
     }
 
     /**
      * Returns this value as a Short
      */
     fun asShort(): Short {
-        return asNumber().toShort()
+        return cast(content)
     }
 
     /**
      * Returns this value as a Char
-     *
-     * The value must be saved either as an Int or a String
      */
     fun asChar(): Char {
-        return asNumber().toChar()
+        return cast(content)
     }
 
     /**
      * Returns this value as a [Date]
-     *
-     * The value must be saved as a timestamp, either in a String or a Long
      */
-    fun asDate(): Date {    //FIXME If the content is a Date this won't work, test it
-        return Date(asLong())
+    fun asDate(): Date {
+        return cast(content)
     }
 
     /**
-     * Returns this value as a [Date], using the given [dateFormat]
+     * Returns this value as a [Date] using the given [dateFormat] to parse the input
      *
-     * The value must be saved as a String that matches the given [dateFormat]
+     * If the value is not a String, this will just return the [Date] instance if possible
      */
     fun asDate(dateFormat: DateFormat): Date {
-        return try {
-            dateFormat.parse(asString())
-        } catch (e: Exception) {
-            throw JsonException(e.message)
-        }
+        return castDate(content, dateFormat)
     }
 
     /**
-     * Returns this value as a [Date], using the given [format] and [locale] to parse
-     * the date
+     * Returns this value as a [Date] using the given [format] and [locale] to input
+     * the input
      *
-     * The value must be saved as a String that matches the given [format]
+     * If the value is not a String, this will just return the [Date] instance if possible
      */
     fun asDate(
         format: String,
         locale: Locale = Locale.getDefault()
     ): Date {
-        return asDate(SimpleDateFormat(format, locale))
+        return castDate(content, format, locale)
     }
 
     /**
      * Returns this value as a [Calendar]
-     *
-     * The value must be saved as a timestamp, either in a String or a Long
      */
     fun asCalendar(): Calendar {
-        return Calendar.getInstance().apply {
-            time = asDate()
-        }
+        return cast(content)
     }
 
     /**
-     * Returns this value as a [Calendar], using the given [dateFormat]
+     * Returns this value as a [Calendar] using the given [dateFormat] to parse the input
      *
-     * The value must be saved as a String that matches the given [dateFormat]
+     * If the value is not a String, this will just return the [Calendar] instance if possible
      */
     fun asCalendar(dateFormat: DateFormat): Calendar {
-        return Calendar.getInstance().apply {
-            time = asDate(dateFormat)
-        }
+        return castDate(content, dateFormat)
     }
 
     /**
-     * Returns this value as a [Calendar], using the given [format] and [locale] to parse
-     * the date
+     * Returns this value as a [Calendar] using the given [format] and [locale] to parse
+     * the input
      *
-     * The value must be saved as a String that matches the given [format]
+     * If the value is not a String, this will just return the [Calendar] instance if possible
      */
     fun asCalendar(
         format: String,
         locale: Locale = Locale.getDefault()
     ): Calendar {
-        return asCalendar(SimpleDateFormat(format, locale))
+        return castDate(content, format, locale)
     }
 
     /**
      * Returns this value as an [IntRange]
-     *
-     * The value must be saved as a String or as an Int, the String must be formatted as "XX..XX"
-     *
-     * A single value will be parsed into 0..value
      */
     fun asRange(): IntRange {
-        val regex = Regex("[0-9]+\\.\\.[0-9]+")
-
-        return try {
-            IntRange(0, asInt())
-        } catch (e: Exception) {
-            val s = asString()
-
-            require(s.matches(regex)) {
-                JsonException("Value cannot be parsed into IntRange")
-            }
-
-            with(s.split("..")) {
-                IntRange(
-                    get(0).toInt(),
-                    get(1).toInt()
-                )
-            }
-        }
+        return cast(content)
     }
 
     /**
      * Returns this value as a [BigDecimal]
      */
     fun asBigDecimal(): BigDecimal {
-        return try {
-            BigDecimal(asString())
-        } catch (e: Exception) {
-            BigDecimal(asDouble())
-        }
+        return cast(content)
     }
 
     /**
      * Returns this value as an [URL]
      */
     fun asURL(): URL {
-        return URL(asString())
+        return cast(content)
     }
 
     /**
@@ -361,17 +290,31 @@ class JsonValue : Json {
     /**
      * Returns this value as an Enum of type [T]
      *
-     * The string value retrieved from the json will be capitalized by default,
-     * if your enum class values are not capitalized, you can use the
-     * [transform] block to customize it
+     * The [transform] block is used to decided how the Enum value should be
+     * read and used to parse the enum
      */
     inline fun <reified T : Enum<T>> asEnum(
         transform: (String) -> String = { it.capitalize() }
     ): T {
-        return java.lang.Enum.valueOf(
-            T::class.java,
-            transform(asString())
-        )
+        val clazz = T::class.java
+
+        return if (content is T) {
+            content as T
+        } else if (content is Number) {
+            val enums = clazz.enumConstants
+            val ordinal = asInt()
+
+            if (ordinal < enums.size) {
+                enums[ordinal]
+            } else {
+                throw JsonException("Ordinal value out of range for enum ${clazz.simpleName}")
+            }
+        } else {
+            java.lang.Enum.valueOf(
+                clazz,
+                transform(asString())
+            )
+        }
     }
 
     /**

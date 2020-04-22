@@ -221,7 +221,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toStringList(): List<String> {
         return List(size) {
-            list[it].toJsonValue().asString()
+            cast<String>(list[it])
         }
     }
 
@@ -230,7 +230,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toNumberList(): List<Number> {
         return List(size) {
-            list[it].toJsonValue().asNumber()
+            cast<Number>(list[it])
         }
     }
 
@@ -239,7 +239,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toJsonObjectList(): List<JsonObject> {
         return List(size) {
-            list[it].toJsonValue().asJsonObject()
+            cast<JsonObject>(list[it])
         }
     }
 
@@ -248,7 +248,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toIntList(): List<Int> {
         return List(size) {
-            list[it].toJsonValue().asInt()
+            cast<Int>(list[it])
         }
     }
 
@@ -257,7 +257,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toLongList(): List<Long> {
         return List(size) {
-            list[it].toJsonValue().asLong()
+            cast<Long>(list[it])
         }
     }
 
@@ -266,7 +266,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toBooleanList(): List<Boolean> {
         return List(size) {
-            list[it].toJsonValue().asBoolean()
+            cast<Boolean>(list[it])
         }
     }
 
@@ -275,7 +275,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDoubleList(): List<Double> {
         return List(size) {
-            list[it].toJsonValue().asDouble()
+            cast<Double>(list[it])
         }
     }
 
@@ -284,7 +284,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toFloatList(): List<Float> {
         return List(size) {
-            list[it].toJsonValue().asFloat()
+            cast<Float>(list[it])
         }
     }
 
@@ -293,7 +293,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toByteList(): List<Byte> {
         return List(size) {
-            list[it].toJsonValue().asByte()
+            cast<Byte>(list[it])
         }
     }
 
@@ -302,7 +302,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toShortList(): List<Short> {
         return List(size) {
-            list[it].toJsonValue().asShort()
+            cast<Short>(list[it])
         }
     }
 
@@ -311,7 +311,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCharList(): List<Char> {
         return List(size) {
-            list[it].toJsonValue().asChar()
+            cast<Char>(list[it])
         }
     }
 
@@ -320,7 +320,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDateList(): List<Date> {
         return List(size) {
-            list[it].toJsonValue().asDate()
+            cast<Date>(list[it])
         }
     }
 
@@ -329,7 +329,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDateList(dateFormat: DateFormat): List<Date> {
         return List(size) {
-            list[it].toJsonValue().asDate(dateFormat)
+            castDate<Date>(list[it],dateFormat)
         }
     }
 
@@ -341,7 +341,7 @@ class JsonArray : Json, MutableList<Any?> {
         locale: Locale = Locale.getDefault()
     ): List<Date> {
         return List(size) {
-            list[it].toJsonValue().asDate(format, locale)
+            castDate<Date>(list[it],format,locale)
         }
     }
 
@@ -350,7 +350,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCalendarList(): List<Calendar> {
         return List(size) {
-            list[it].toJsonValue().asCalendar()
+            cast<Calendar>(list[it])
         }
     }
 
@@ -359,7 +359,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCalendarList(dateFormat: DateFormat): List<Calendar> {
         return List(size) {
-            list[it].toJsonValue().asCalendar(dateFormat)
+            castDate<Calendar>(list[it],dateFormat)
         }
     }
 
@@ -371,7 +371,7 @@ class JsonArray : Json, MutableList<Any?> {
         locale: Locale = Locale.getDefault()
     ): List<Calendar> {
         return List(size) {
-            list[it].toJsonValue().asCalendar(format, locale)
+            castDate<Calendar>(list[it],format,locale)
         }
     }
 
@@ -380,7 +380,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toRangeList(): List<IntRange> {
         return List(size) {
-            list[it].toJsonValue().asRange()
+            cast<IntRange>(list[it])
         }
     }
 
@@ -389,7 +389,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toBigDecimalList(): List<BigDecimal> {
         return List(size) {
-            list[it].toJsonValue().asBigDecimal()
+            cast<BigDecimal>(list[it])
         }
     }
 
@@ -398,7 +398,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toURLList(): List<URL> {
         return List(size) {
-            list[it].toJsonValue().asURL()
+            cast<URL>(list[it])
         }
     }
 
@@ -417,7 +417,7 @@ class JsonArray : Json, MutableList<Any?> {
     /**
      * Returns this [JsonArray] as a List of Enum of type [T]
      */
-    inline fun <reified T : Enum<T>> toEnumList(    //TODO Improve support for JAva with @JavaOverloads
+    inline fun <reified T : Enum<T>> toEnumList(    //TODO Improve support for Java with @JavaOverloads
         transform: (String) -> String = { it.capitalize() }
     ): List<T> {
         val list = toList()

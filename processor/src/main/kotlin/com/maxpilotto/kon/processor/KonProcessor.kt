@@ -22,6 +22,7 @@ import java.io.File
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.Element
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
 import javax.lang.model.type.ArrayType
 import javax.lang.model.type.DeclaredType
@@ -30,8 +31,6 @@ import javax.lang.model.type.TypeMirror
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 import kotlin.reflect.KClass
-import javax.lang.model.element.ElementKind
-import javax.xml.validation.TypeInfoProvider
 
 
 /**
@@ -310,6 +309,7 @@ abstract class KonProcessor : AbstractProcessor() {
     }
 
     companion object {
-        val OPTIONAL_ANY = Any::class.asTypeName().copy(true)
+        internal val BASE_PACKAGE = "com.maxpilotto.kon"
+        internal val OPTIONAL_ANY = Any::class.asTypeName().copy(true)
     }
 }

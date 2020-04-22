@@ -26,3 +26,13 @@ internal fun Calendar(time: Long): Calendar {
         timeInMillis = time
     }
 }
+
+/**
+ * Creates an instance of [Calendar] with the given [date],
+ * which must be expressed in milliseconds
+ */
+internal fun Calendar(date: Date): Calendar {
+    return Calendar.getInstance().apply {
+        time = date
+    }
+}
