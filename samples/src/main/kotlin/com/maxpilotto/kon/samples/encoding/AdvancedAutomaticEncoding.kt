@@ -49,13 +49,10 @@ fun main() {
     val book = Book(
         "1984", 1948, author
     )
-    val json = book.encode {
+    val json = BookEncoder.encode(book) {
         when (it) {
             is Date -> it.time
             is Genre -> JsonObject().apply {
-                //TODO Add a constructor that takes a list of Entities
-                //TODO Create a JsonObject builder
-
                 set("id", it.id)
                 set("name", it.name)
             }

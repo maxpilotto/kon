@@ -11,7 +11,7 @@ data class Author(
 
 fun main() {
     val author = Author("George", "Orwell", 1903)
-    val json = author.encode()
+    val json = AuthorEncoder.encode(author)
 
     println(json)
 }

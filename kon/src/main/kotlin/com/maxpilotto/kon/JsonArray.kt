@@ -79,6 +79,11 @@ class JsonArray : Json, MutableList<Any?> {
     constructor(jsonArray: JsonArray) : this(jsonArray.toList())
 
     /**
+     * Creates a JsonArray from the given [items]
+     */
+    constructor(vararg items: Any?) : this(items.toList())
+
+    /**
      * Creates a JsonArray from the given [collection]
      *
      * This won't work unwrap the values if they're [JsonValue] instances

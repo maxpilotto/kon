@@ -102,10 +102,15 @@ class JsonObject : Json {   //TODO Add value observer
     constructor(jsonObject: JsonObject) : this(jsonObject.map)
 
     /**
+     * Creates a JsonObject from the given [properties]
+     */
+    constructor(vararg properties: Pair<String, Any?>) : this(properties.toMap())
+
+    /**
      * Creates a JsonObject from the given [map]
      */
-    constructor(map: MutableMap<String, Any?>) {
-        this.map = map
+    constructor(map: Map<String, Any?>) {
+        this.map = map.toMutableMap()
     }
 
     override fun toString(): String {
@@ -248,14 +253,14 @@ class JsonObject : Json {   //TODO Add value observer
     /**
      * Returns a copy of the map used internally to implement this [JsonObject]
      */
-    fun toMap(): Map<String,Any?> {
+    fun toMap(): Map<String, Any?> {
         return map.toMap()
     }
 
     /**
      * Returns a copy of the map used internally, casted as the given type
      */
-    fun <K,V> toTypedMap(): Map<K,V> {
+    fun <K, V> toTypedMap(): Map<K, V> {
         return toMap() as Map<K, V>
     }
 
@@ -296,7 +301,7 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * By default the [default] value is 0
      */
-    fun optNumber(
+    fun optNumber(  //TODO There should be an alternative that doesn't take the default and returns 0 or null
         key: String,
         default: Number? = 0
     ): Number? {
@@ -544,8 +549,6 @@ class JsonObject : Json {   //TODO Add value observer
         key: String,
         default: Any? = 0   //FIXME Null doesn't work as the default value
     ): Date? {
-        val value = opt(key, default)
-
         return when (default) {
             is Date -> opt(key, default)
             is Number -> opt(key, Date(default.toLong()))
@@ -598,7 +601,7 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * @throws JsonException If the given key doesn't exist
      */
-    fun getDate(
+    fun getDate(    //TODO Update the documentation, tell the devs what are the parameters used for
         key: String,
         format: String,
         locale: Locale = Locale.getDefault()
