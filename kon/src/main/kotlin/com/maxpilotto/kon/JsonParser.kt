@@ -185,7 +185,7 @@ class JsonParser {     //TODO Add option for detailed errors using the IndexPath
         var c = next()
 
         return when (c) {
-            '"' -> {       //TODO Add single quotes
+            '"' -> {
                 nextString()
             }
             '{' -> {
@@ -263,7 +263,7 @@ class JsonParser {     //TODO Add option for detailed errors using the IndexPath
      *
      * A string must be surrounded by two double quotes
      */
-    private fun nextString(): String {   //TODO Add configuration that parses strings with single quotes
+    private fun nextString(): String {
         return StringBuilder().run {
             loop@ while (true) {
                 when (val c = next(false)) {

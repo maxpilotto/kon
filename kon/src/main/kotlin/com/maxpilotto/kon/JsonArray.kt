@@ -15,7 +15,6 @@
  */
 package com.maxpilotto.kon
 
-import com.maxpilotto.kon.extensions.prettify
 import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
 import java.math.BigDecimal
@@ -98,7 +97,11 @@ class JsonArray : Json, MutableList<Any?> {
 
     override fun prettify(): String {
         return list.joinToString(",", "[", "]", transform = {
-            it.prettify()   //TODO Check if this works with JsonArrays and JsonObjects
+            when (it) {
+                is String -> "\"$it\""
+
+                else -> it.toString()
+            }
         })
     }
 

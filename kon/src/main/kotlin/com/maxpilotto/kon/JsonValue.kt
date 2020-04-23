@@ -15,7 +15,6 @@
  */
 package com.maxpilotto.kon
 
-import com.maxpilotto.kon.extensions.prettify
 import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
@@ -39,7 +38,7 @@ import java.util.*
  *
  * vs.
  *
- * val dob = (json.getJsonArray("people").getValue(0) as JsonObject).getJsonObject("data").getDate("dob")    //TODO Test this
+ * val dob = (json.getJsonArray("people").getValue(0) as JsonObject).getJsonObject("data").getDate("dob")
  * ```
  */
 class JsonValue : Json {
@@ -99,7 +98,11 @@ class JsonValue : Json {
     }
 
     override fun prettify(): String {
-        return content.prettify()
+        return when (content) {
+            is String -> "\"$content\""
+
+            else -> content.toString()
+        }
     }
 
     /**
