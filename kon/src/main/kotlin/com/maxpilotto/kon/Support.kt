@@ -66,13 +66,42 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
             else -> throw JsonException("Value cannot be cast/parsed as Number")
         }
 
-        Int::class -> cast<Number>(value).toInt()
-        Long::class -> cast<Number>(value).toLong()
-        Double::class -> cast<Number>(value).toDouble()
-        Float::class -> cast<Number>(value).toFloat()
-        Byte::class -> cast<Number>(value).toByte()
-        Short::class -> cast<Number>(value).toShort()
-        Char::class -> cast<Number>(value).toChar()
+        Int::class -> when (value) {
+            Int::class -> value
+
+            else -> cast<Int>(value).toInt()
+        }
+        Long::class -> when (value) {
+            Long::class -> value
+
+            else -> cast<Long>(value).toLong()
+        }
+        Double::class -> when (value) {
+            Double::class -> value
+
+            else -> cast<Double>(value).toDouble()
+        }
+        Float::class -> when (value) {
+            Float::class -> value
+
+            else -> cast<Float>(value).toFloat()
+        }
+        Byte::class -> when (value) {
+            Byte::class -> value
+
+            else -> cast<Byte>(value).toByte()
+        }
+        Short::class -> when (value) {
+            Short::class -> value
+
+            else -> cast<Short>(value).toShort()
+        }
+        Char::class -> when (value) {
+            Char::class -> value
+            String::class -> (value as String).single()
+
+            else -> cast<Number>(value).toChar()
+        }
         Boolean::class -> when (value) {
             is Boolean -> value
             is Number -> value.toInt() != 0
