@@ -50,19 +50,12 @@ class CodableProcessor : KonProcessor() {
                     val privateConstructor = FunSpec.constructorBuilder()
                         .addModifiers(KModifier.PRIVATE)
                         .build()
-                    val encoderCompanion = TypeSpec.companionObjectBuilder().apply {
-                        encodeClass(element).forEach {
-                            addFunction(it)
-                        }
-                    }.build()
-                    val decoderCompanion = TypeSpec.companionObjectBuilder().apply {
-                        decodeString(element).forEach {
-                            addFunction(it)
-                        }
-                        decodeJson(element).forEach {
-                            addFunction(it)
-                        }
-                    }.build()
+                    val encoderCompanion = TypeSpec.companionObjectBuilder()
+                        .addFunctions(encodeClass(element))
+                        .build()
+                    val decoderCompanion = TypeSpec.companionObjectBuilder()
+                        .addFunctions(decodeClass(element))
+                        .build()
                     val file = FileSpec.builder(packageName, fileName)
                         .addImport("$BASE_PACKAGE.extensions", "toJsonValue")
                         .addImport("$BASE_PACKAGE.util", "JsonException")
@@ -230,42 +223,31 @@ class CodableProcessor : KonProcessor() {
         return builder.toString()
     }
 
-    private fun decodeString(element: Element): List<FunSpec> {
+    private fun decodeClass(element: Element): List<FunSpec> {
         val doc = """
-            Creates an instance of ${element.asType().simpleName} from the given [string]
+            Creates an instance of ${element.asType().simpleName} from the given [json]
         """.trimIndent()
-        val invoke = FunSpec.builder("invoke")
+        val invokeString = FunSpec.builder("invoke")
             .addKdoc(doc)
             .addModifiers(KModifier.OPERATOR)
             .addAnnotation(JvmOverloads::class)
             .addAnnotation(JvmStatic::class)
-            .addParameter("string", String::class)
+            .addParameter("json", String::class)
             .addParameter(transformBlock)
-            .addStatement("return decode(string,transform)")
+            .addStatement("return decode(json,transform)")
             .returns(element.asType().asTypeName())
-        val method = FunSpec.builder("decode")
+        val decodeString = FunSpec.builder("decode")
             .addKdoc(doc)
             .addAnnotation(JvmOverloads::class)
             .addAnnotation(JvmStatic::class)
-            .addParameter("string", String::class)
+            .addParameter("json", String::class)
             .addParameter(transformBlock)
             .addStatement(
-                "return decode(%T(string),transform)",
+                "return decode(%T(json),transform)",
                 JsonObject::class
             )
             .returns(element.asType().asTypeName())
-
-        return listOf(
-            method.build(),
-            invoke.build()
-        )
-    }
-
-    private fun decodeJson(element: Element): List<FunSpec> {
-        val doc = """
-            Creates an instance of ${element.asType().simpleName} from the given [json]
-        """.trimIndent()
-        val invoke = FunSpec.builder("invoke")
+        val invokeJson = FunSpec.builder("invoke")
             .addKdoc(doc)
             .addModifiers(KModifier.OPERATOR)
             .addAnnotation(JvmOverloads::class)
@@ -274,7 +256,7 @@ class CodableProcessor : KonProcessor() {
             .addParameter(transformBlock)
             .addStatement("return decode(json,transform)")
             .returns(element.asType().asTypeName())
-        val method = FunSpec.builder("decode")
+        val decodeJson = FunSpec.builder("decode")
             .addKdoc(doc)
             .addAnnotation(JvmOverloads::class)
             .addAnnotation(JvmStatic::class)
@@ -349,16 +331,18 @@ class CodableProcessor : KonProcessor() {
             }
         }
 
-        method.addCode(
+        decodeJson.addCode(
             "return %T(",
             element.asType()
         )
-        method.addCode(parameters.build())
-        method.addCode(")")
+        decodeJson.addCode(parameters.build())
+        decodeJson.addCode(")")
 
         return listOf(
-            method.build(),
-            invoke.build()
+            decodeJson.build(),
+            decodeString.build(),
+            invokeJson.build(),
+            invokeString.build()
         )
     }
 
