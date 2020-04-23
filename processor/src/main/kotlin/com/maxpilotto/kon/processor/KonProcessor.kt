@@ -15,12 +15,11 @@
  */
 package com.maxpilotto.kon.processor
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
 import java.io.File
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
+import javax.lang.model.AnnotatedConstruct
 import javax.lang.model.element.Element
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
@@ -28,21 +27,14 @@ import javax.lang.model.type.ArrayType
 import javax.lang.model.type.DeclaredType
 import javax.lang.model.type.TypeKind
 import javax.lang.model.type.TypeMirror
-import javax.lang.model.util.Elements
-import javax.lang.model.util.Types
 import kotlin.reflect.KClass
 
+typealias PropertiesBlock = (prop: Element, name: String, type: TypeMirror, isLast: Boolean) -> Unit
 
 /**
  * Base Processor class used to process Kon's annotations
  */
 abstract class KonProcessor : AbstractProcessor() {
-    protected val typeUtils: Types
-        get() = processingEnv.typeUtils
-
-    protected val elementUtils: Elements
-        get() = processingEnv.elementUtils
-
     protected val generatedDir: File
         get() = File(processingEnv.options["kapt.kotlin.generated"])
 
@@ -62,17 +54,14 @@ abstract class KonProcessor : AbstractProcessor() {
     /**
      * Returns whether or not the given [element] has the given [annotation]
      */
-    protected fun <A : Annotation> hasAnnotation(element: Element, annotation: KClass<A>): Boolean {
-        return element.getAnnotation(annotation.java) != null ||
-                getTypeElement(element).getAnnotation(annotation.java) != null
-    }
+    protected fun <A : Annotation> hasAnnotation(element: AnnotatedConstruct, annotation: KClass<A>): Boolean {
+        return when (element) {
+            is TypeMirror -> hasAnnotation(processingEnv.typeUtils.asElement(element), annotation)
+            is Element -> element.getAnnotation(annotation.java) != null ||
+                    getTypeElement(element).getAnnotation(annotation.java) != null
 
-    /**
-     * Returns whether or not the given [typeMirror] has the given [annotation]
-     */
-    protected fun <A : Annotation> hasAnnotation(typeMirror: TypeMirror, annotation: KClass<A>): Boolean {
-        return typeMirror.getAnnotation(annotation.java) != null ||
-                getTypeElement(typeMirror).getAnnotation(annotation.java) != null
+            else -> false
+        }
     }
 
     /**
@@ -87,22 +76,13 @@ abstract class KonProcessor : AbstractProcessor() {
     /**
      * Returns the given [element] as a [TypeElement]
      */
-    protected fun getTypeElement(element: Element): TypeElement {
-        return getTypeElement(element.asType())
-    }
+    protected fun getTypeElement(element: AnnotatedConstruct): TypeElement {
+        return when (element) {
+            is TypeMirror -> processingEnv.typeUtils.asElement(element)
+            is Element -> getTypeElement(element.asType())
 
-    /**
-     * Returns the given [typeMirror] as a [TypeElement]
-     */
-    protected fun getTypeElement(typeMirror: TypeMirror): TypeElement { //TODO Replace all elements and typeMirrors with AnnotatedConstruct
-        return typeUtils.asElement(typeMirror) as TypeElement
-    }
-
-    /**
-     * Returns the [TypeName] of the given [typeMirror]'s Companion object
-     */
-    protected fun getCompanionObject(typeMirror: TypeMirror): TypeName {
-        return ClassName.bestGuess("$typeMirror.Companion")
+            else -> throw Exception("Value cannot be cast as TypeMirror or Element")
+        } as TypeElement
     }
 
     /**
@@ -134,9 +114,9 @@ abstract class KonProcessor : AbstractProcessor() {
 
     /**
      * Returns whether or not the given [typeMirror] is a Long
-    *
-    * This will check for both Long (kotlin) and long/Long (java)
-    */
+     *
+     * This will check for both Long (kotlin) and long/Long (java)
+     */
     protected fun isLong(typeMirror: TypeMirror): Boolean {
         return typeMirror.kind == TypeKind.LONG ||
                 isSubclass(typeMirror, Long::class) ||
@@ -284,10 +264,7 @@ abstract class KonProcessor : AbstractProcessor() {
      * Loops through all the properties of the given [element] that are [ElementKind.FIELD]
      * and are not the Companion object
      */
-    protected inline fun getProperties(
-        element: Element,
-        block: (prop: Element, name: String, type: TypeMirror, isLast: Boolean) -> Unit
-    ) {
+    protected inline fun getProperties(element: Element, block: PropertiesBlock) {
         val elements = element.enclosedElements.filter {
             it.kind == ElementKind.FIELD && it.simpleName.toString() != "Companion"
         }

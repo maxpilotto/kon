@@ -45,7 +45,7 @@ class CodableProcessor : KonProcessor() {
         when (kClass) {
             Codable::class -> {
                 for (element in elements) {
-                    val packageName = elementUtils.getPackageOf(element).toString()
+                    val packageName = processingEnv.elementUtils.getPackageOf(element).toString()
                     val fileName = element.simpleName.toString()
                     val privateConstructor = FunSpec.constructorBuilder()
                         .addModifiers(KModifier.PRIVATE)
