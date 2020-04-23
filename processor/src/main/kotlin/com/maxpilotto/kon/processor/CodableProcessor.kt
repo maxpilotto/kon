@@ -132,12 +132,14 @@ class CodableProcessor : KonProcessor() {
             }
 
             when {
-                // The property is a primitive or String, they can just be added to the object
-                // with no additional action
+                // The property is one of the type that are supported by the JsonObject and don't need any
+                // special action, they can be directly added to the object
                 isPrimitive(type) ||
                         isString(type) ||
                         isSubclass(type, Number::class) ||
-                        isSubclass(type, BigDecimal::class) -> {
+                        isSubclass(type, BigDecimal::class) ||
+                        isSubclass(type, JsonObject::class) ||  //TODO Add IntRange, URL, Enum
+                        isSubclass(type, JsonArray::class) -> {
                     method.addStatement("""json.set("$name",$getter)""")  //TODO Add the transform for all types
                 }
 
@@ -167,7 +169,7 @@ class CodableProcessor : KonProcessor() {
                 // otherwise the transform block will be called and if that block returns a null object
                 // the toString() method will be used
                 //
-                // This is also used to parse IntRange, Enum, URL, Date and Calendar //TODO Date and Calendar need their formats, enums too
+                // TODO Date and Calendar need their formats, enums too
                 else -> {
                     val transform = if (hasAnnotation(prop, Codable::class)) {
                         """${getEncoder(prop)}.encode($getter)"""
@@ -298,7 +300,7 @@ class CodableProcessor : KonProcessor() {
                 isSubclass(type, BigDecimal::class) -> parameters.add("""json.getBigDecimal("$name")""")
                 isSubclass(type, Number::class) -> parameters.add("""json.getNumber("$name")""")
 
-                // Kon objects  //TODO Add these two to the encoder too
+                // Kon objects
                 isSubclass(type, JsonObject::class) -> parameters.add("""json.getJsonObject("$name")""")
                 isSubclass(type, JsonArray::class) -> parameters.add("""json.getJsonArray("$name")""")
 
@@ -315,7 +317,7 @@ class CodableProcessor : KonProcessor() {
                 isCollection(type) || isArray(type) -> {
                     parameters.add("""json.getList("$name") { ${decodeCollection(type)} }""")
 //                        parameters.add("""json.getList("$name") {""")
-//                        parameters.add(decodeCollection(type))
+//                        parameters.add(decodeCollection(type))    //TODO Test!!!!
 //                        parameters.add("}")
                 }
 

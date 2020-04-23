@@ -281,13 +281,6 @@ abstract class KonProcessor : AbstractProcessor() {
     }
 
     /**
-     * Returns whether the given [element] has a companion object or not
-     */
-    protected fun hasCompanion(element: Element): Boolean {
-        return element.enclosedElements.any { it.simpleName.toString() == "Companion" }
-    }
-
-    /**
      * Loops through all the properties of the given [element] that are [ElementKind.FIELD]
      * and are not the Companion object
      */

@@ -46,7 +46,7 @@ abstract class Json {
      *
      * If the [element] is a [JsonValue], the value will be unwrapped
      */
-    open operator fun set(key: String, element: Any?) {
+    open operator fun set(key: String, element: Any?) { //FIXME Both set methods should take care of wrapping lists and maps in JsonArray and JsonObject
         throw JsonException("Operation not supported")
     }
 
