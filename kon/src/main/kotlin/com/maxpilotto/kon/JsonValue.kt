@@ -51,6 +51,14 @@ class JsonValue : Json {
     var content: Any?
         private set
 
+    /**
+     * Returns whether or not this [JsonValue] is null
+     *
+     * This is the same thing as checking the equality with [JsonValue.NULL]
+     */
+    val isNull: Boolean
+        get() = this == NULL
+
     constructor(value: Any? = null) {       //TODO Limit the usage of the JsonValue to the library only
         this.content = if (value is JsonValue) {
             value.content
@@ -85,12 +93,12 @@ class JsonValue : Json {
 
     override fun equals(other: Any?): Boolean {
         return if (other is JsonValue) {
-            if ((other.content == null && content == "null") ||
-                (other.content == "null" && content == null)
-            ) {
-                true
-            } else {
-                other.content == content
+            when {
+                other.content == true && content == "true" || other.content == "true" && content == true -> true
+                other.content == false && content == "false" || other.content == "false" && content == false -> true
+                other.content == null && content == "null" || other.content == "null" && content == null -> true
+
+                else -> other.content == content
             }
         } else {
             other == content
@@ -103,22 +111,6 @@ class JsonValue : Json {
 
             else -> content.toString()
         }
-    }
-
-    /**
-     * Returns whether or not the [content] is null
-     *
-     * If [stringCheck] is true, this will also check if the [content]
-     * is equals to "null", ignoring the case
-     */
-    fun isNull(stringCheck: Boolean = true): Boolean {
-        if (content == null) {
-            return true
-        } else if (content is String && stringCheck) {
-            return (content as String).toLowerCase() == "null"
-        }
-
-        return false
     }
 
     /**
