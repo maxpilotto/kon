@@ -49,7 +49,7 @@ The following is a table showing the supported types, how they're stored inside 
 | Type | Json | JsonObject | Json storing examples |
 | --- | --- | --- | --- |
 | String | String, Any | String, Any | "hello", 1, 0.0 |
-| Number (Int, Char, ..)  | String, Number | String, Number | 1, 2, 0.0, "3" |
+| Number | String, Number | String, Number | 1, 2, 0.0, "3" |
 | Boolean | String, Number | String, Number, Boolean | "true", "false" |
 | Calendar/Date | String, Number (timestamp) | String, Number (timestamp), Date, Calendar | "1587497556000", 1587497556000, "2020-04-20" |
 | IntRange | String, Number | String, Number, IntRange | "0..20", "20", 20 |

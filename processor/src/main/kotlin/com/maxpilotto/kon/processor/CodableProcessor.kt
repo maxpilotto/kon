@@ -90,9 +90,9 @@ class CodableProcessor : KonProcessor() {
         val doc = """
             Returns the calling object as a [JsonObject]
             
-            If any of the properties is not a primitive, String, Collection or Map and is not
-            marked as Codable, the toString() method will be called on that property
-            to retrieve the data
+            If any of the properties is not supported by the [JsonObject]'s [JsonObject.set] method and it 
+            is not marked as Codable, the toString() method of that instance will be called and that
+            property will be saved as a String
             
             The [transform] block can be used to encode objects that are not marked as Codable,
             this block should return the value as it should be saved, generally a 
@@ -139,12 +139,7 @@ class CodableProcessor : KonProcessor() {
                 // The property is a collection or array, this must be resolved recursively
                 // due to the fact that it could be a list of lists or an array of arrays
                 isArray(type) || isCollection(type) -> {
-                    val content = encodeCollection(type, getter)
-
-                    method.addStatement(
-                        """json.set("$name",%T($content))""",
-                        JsonArray::class
-                    )
+                    method.addStatement("""json.set("$name",%T(${encodeCollection(type, getter)}))""", JsonArray::class)
                 }
 
                 // The property is a map, this can be added but must be converted into
@@ -170,9 +165,7 @@ class CodableProcessor : KonProcessor() {
                         """transform($getter) ?: $getter.toString()"""
                     }
 
-                    method.addStatement(
-                        """json.set("$name",$transform)"""
-                    )
+                    method.addStatement("""json.set("$name",$transform)""")
                 }
             }
         }
@@ -188,44 +181,46 @@ class CodableProcessor : KonProcessor() {
     private fun encodeCollection(
         type: TypeMirror,
         propName: String = "it"
-    ): String {
+    ): CodeBlock {
         val component = getComponentType(type)
-        val builder = StringBuilder(
-            """$propName.joinToString(",","[","]",transform = {"""
-        )
+        val code = CodeBlock.builder()
 
         component?.let {
             when {
                 isPrimitive(it) || isString(it) || isEnum(it) -> {
-                    builder += "it.toString()"
+                    code.add("it.toString()")
                 }
 
                 isArray(it) || isCollection(it) -> {
-                    builder.append(encodeCollection(it))
+                    code.add(encodeCollection(it))
                 }
 
                 isMap(it) -> {
-                    builder.append("JsonObject(it.toMutableMap() as MutableMap<String, Any?>).toString()")
+                    code.add("JsonObject(it.toMutableMap() as MutableMap<String, Any?>).toString()")
                 }
 
                 else -> {
                     if (hasAnnotation(it, Codable::class)) {
-                        builder.append("""${getEncoder(it)}.encode(it).toString()""")
+                        code.add("""${getEncoder(it)}.encode(it).toString()""")
                     } else {
-                        builder.append("""(transform(it) ?: it).toString()""")
+                        code.add("""(transform(it) ?: it).toString()""")
                     }
                 }
             }
         }
 
-        builder += "})"
-
-        return builder.toString()
+        return CodeBlock.of("""$propName.joinToString(",","[","]",transform = { ${code.build()} })""")
     }
 
     private fun decodeClass(element: Element): List<FunSpec> {
         val doc = """
             Creates an instance of ${element.asType().simpleName} from the given [json]
+            
+            If any of the properties is not supported by the [JsonObject]'s [JsonObject.set] method,
+            it is not marked as Codable and it is nullable then null will be returned, otherwise
+            an exception is thrown
+            
+            The [transform] block can be used to decode objects that are not marked as Codable
         """.trimIndent()
         val invokeString = FunSpec.builder("invoke")
             .addKdoc(doc)
@@ -298,9 +293,6 @@ class CodableProcessor : KonProcessor() {
                 // Collection or Array
                 isCollection(type) || isArray(type) -> {
                     parameters.add("""json.getList("$name") { ${decodeCollection(type)} }""")
-//                        parameters.add("""json.getList("$name") {""")
-//                        parameters.add(decodeCollection(type))    //TODO Test!!!!
-//                        parameters.add("}")
                 }
 
                 // Map
@@ -316,10 +308,9 @@ class CodableProcessor : KonProcessor() {
                         if (hasAnnotation(prop, Nullable::class)) {
                             parameters.add("""transform(json.getJsonObject("$name")) as ${type.simpleName}? ?: null""")
                         } else {
-                            parameters.add(
-                                """transform(json.getJsonObject("$name")) as ${type.simpleName}? ?: throw JsonException()"""
-//                                ,
-//                                """Class ${type.simpleName} needs to be marked as Codable or parsed using the transform block"""  //FIXME This doesn't get formatted correctly
+                            parameters.addStatement(
+                                """transform(json.getJsonObject("$name")) as ${type.simpleName}? ?: throw JsonException(%S)""",
+                                "Class·${type.simpleName}·needs·to·be·marked·as·Codable·or·parsed·using·the·transform·block"
                             )
                         }
                     }
@@ -332,11 +323,9 @@ class CodableProcessor : KonProcessor() {
         }
 
         decodeJson.addCode(
-            "return %T(",
+            "return %T( ${parameters.build()} )",
             element.asType()
         )
-        decodeJson.addCode(parameters.build())
-        decodeJson.addCode(")")
 
         return listOf(
             decodeJson.build(),
@@ -381,9 +370,7 @@ class CodableProcessor : KonProcessor() {
 
                 // Collection or Array
                 isCollection(it) || isArray(it) -> {
-                    code.add("cast<JsonArray>(it).toList{")
-                    code.add(decodeCollection(it))
-                    code.add("}")
+                    code.add("cast<JsonArray>(it).toList{ ${decodeCollection(it)} }")
                 }
 
                 // Map
@@ -400,9 +387,8 @@ class CodableProcessor : KonProcessor() {
                             code.add("transform(cast<JsonObject>(it)) as ${it.simpleName}? ?: null")
                         } else {
                             code.add(
-                                """transform(cast<JsonObject>(it)) as ${it.simpleName}? ?: throw JsonException()"""
-//                                ,
-//                                "Class ${it.simpleName} needs to be marked as Codable or parsed using the transform block"    //FIXME This breaks
+                                """transform(cast<JsonObject>(it)) as ${it.simpleName}? ?: throw JsonException(%S)""",
+                                "Class·${it.simpleName}·needs·to·be·marked·as·Codable·or·parsed·using·the·transform·block"
                             )
                         }
                     }
