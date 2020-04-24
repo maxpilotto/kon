@@ -65,7 +65,7 @@ class JsonArray : Json, MutableList<Any?> {
     /**
      * Creates an empty JsonArray
      */
-    constructor() : this(listOf())
+    constructor() : this(emptyList<Any?>())
 
     /**
      * Creates a JsonArray from the given [string]
@@ -87,7 +87,7 @@ class JsonArray : Json, MutableList<Any?> {
      *
      * This won't work unwrap the values if they're [JsonValue] instances
      */
-    constructor(collection: Collection<Any?>) {
+    constructor(collection: Collection<*>) {
         this.list = collection.toMutableList()
     }
 
@@ -110,7 +110,16 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun set(index: Int, element: Any?): Any? {
-        return list.set(index, unwrap(element))
+        val value = unwrap(element).let {
+            when (it) {
+                is Map<*, *> -> JsonObject(it as Map<String, Any?>)
+                is Collection<*> -> JsonArray(it)
+
+                else -> it
+            }
+        }
+
+        return list.set(index, value)
     }
 
     override fun contains(element: Any?): Boolean {
@@ -337,7 +346,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDateList(dateFormat: DateFormat): List<Date> {
         return List(size) {
-            castDate<Date>(list[it],dateFormat)
+            castDate<Date>(list[it], dateFormat)
         }
     }
 
@@ -349,7 +358,7 @@ class JsonArray : Json, MutableList<Any?> {
         locale: Locale = Locale.getDefault()
     ): List<Date> {
         return List(size) {
-            castDate<Date>(list[it],format,locale)
+            castDate<Date>(list[it], format, locale)
         }
     }
 
@@ -367,7 +376,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCalendarList(dateFormat: DateFormat): List<Calendar> {
         return List(size) {
-            castDate<Calendar>(list[it],dateFormat)
+            castDate<Calendar>(list[it], dateFormat)
         }
     }
 
@@ -379,7 +388,7 @@ class JsonArray : Json, MutableList<Any?> {
         locale: Locale = Locale.getDefault()
     ): List<Calendar> {
         return List(size) {
-            castDate<Calendar>(list[it],format,locale)
+            castDate<Calendar>(list[it], format, locale)
         }
     }
 

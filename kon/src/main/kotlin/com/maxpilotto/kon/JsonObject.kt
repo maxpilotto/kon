@@ -88,7 +88,7 @@ class JsonObject : Json {   //TODO Add value observer
     /**
      * Creates an empty JsonObject
      */
-    constructor() : this(hashMapOf())
+    constructor() : this(emptyMap<String, Any?>())
 
     /**
      * Creates a JsonObject from the given [string]
@@ -108,8 +108,8 @@ class JsonObject : Json {   //TODO Add value observer
     /**
      * Creates a JsonObject from the given [map]
      */
-    constructor(map: Map<String, Any?>) {
-        this.map = map.toMutableMap()
+    constructor(map: Map<*, *>) {
+        this.map = map.toMutableMap() as MutableMap<String, Any?>
     }
 
     override fun toString(): String {
@@ -133,6 +133,16 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     override fun set(key: String, element: Any?) {
+        val value = unwrap(element)
+
+        map[key] = when (value) {
+            is Map<*, *> -> JsonObject(value as Map<String, Any?>)
+            is Collection<*> -> JsonArray(value)
+
+            else -> value
+        }
+
+
         map[key] = unwrap(element)
     }
 
@@ -266,6 +276,9 @@ class JsonObject : Json {   //TODO Add value observer
     fun <K, V> toTypedMap(): Map<K, V> {
         return toMap() as Map<K, V>
     }
+
+    //TODO .reduce(keys)
+    //TODO .merge(json)
 
     /**
      * Returns the String for the given [key]
