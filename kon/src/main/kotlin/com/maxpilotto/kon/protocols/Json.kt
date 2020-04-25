@@ -19,6 +19,9 @@ import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.JsonValue
 import com.maxpilotto.kon.util.JsonException
+import java.math.BigDecimal
+import java.net.URL
+import java.util.*
 
 /**
  * Interface containing all the access operators used by
@@ -72,6 +75,44 @@ abstract class Json {
         }
 
         return value
+    }
+
+    /**
+     * Wraps the given [value] inside a [JsonObject] or [JsonArray]
+     * if needed
+     */
+    protected fun wrap(value: Any?): Any? {
+        if (value == null) {
+            return value
+        } else {
+            if (value::class.java.isArray) {    //TODO Check if this works with IntArray (and the others) too
+                return JsonArray(value)
+            }
+        }
+
+        return when (value) {
+            is Collection<*> -> JsonArray(value)
+            is Map<*, *> -> JsonObject(value)
+            is Int,
+            is Short,
+            is Long,
+            is Double,
+            is Float,
+            is Byte,
+            is Number,
+            is String,
+            is JsonObject,
+            is JsonArray,
+            is Boolean,
+            is Calendar,
+            is Date,
+            is IntRange,
+            is BigDecimal,
+            is URL,
+            is Enum<*> -> value
+
+            else -> throw JsonException("${value::class.java.simpleName} can't be added to a JsonArray or JsonObject")
+        }
     }
 
     /**

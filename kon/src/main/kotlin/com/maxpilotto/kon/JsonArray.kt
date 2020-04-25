@@ -88,7 +88,11 @@ class JsonArray : Json, MutableList<Any?> {
      * This won't work unwrap the values if they're [JsonValue] instances
      */
     constructor(collection: Collection<*>) {
-        this.list = collection.toMutableList()
+        this.list = mutableListOf()
+
+        for (e in collection) {
+            this.list.add(wrap(e))
+        }
     }
 
     override fun toString(): String {
@@ -110,16 +114,7 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun set(index: Int, element: Any?): Any? {
-        val value = unwrap(element).let {
-            when (it) {
-                is Map<*, *> -> JsonObject(it as Map<String, Any?>)
-                is Collection<*> -> JsonArray(it)
-
-                else -> it
-            }
-        }
-
-        return list.set(index, value)
+        return list.set(index, wrap(unwrap(element)))
     }
 
     override fun contains(element: Any?): Boolean {
@@ -143,7 +138,7 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun lastIndexOf(element: Any?): Int {
-        return list.lastIndexOf(element)
+        return list.lastIndexOf(unwrap(element))
     }
 
     override fun add(element: Any?): Boolean {
@@ -194,7 +189,7 @@ class JsonArray : Json, MutableList<Any?> {
         return list.subList(fromIndex, toIndex)
     }
 
-    operator fun plusAssign(element: Any?) {
+    operator fun plusAssign(element: Any?) {    //TODO Add more utilities like this
         add(unwrap(element))
     }
 
@@ -203,7 +198,7 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     operator fun minusAssign(element: Any?) {
-        remove(element)
+        remove(unwrap(element))
     }
 
     operator fun minusAssign(elements: Collection<Any?>) {
