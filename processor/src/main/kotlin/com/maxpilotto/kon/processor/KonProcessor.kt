@@ -15,8 +15,14 @@
  */
 package com.maxpilotto.kon.processor
 
+import com.maxpilotto.kon.JsonArray
+import com.maxpilotto.kon.JsonObject
+import com.maxpilotto.kon.processor.extensions.simpleName
 import com.squareup.kotlinpoet.asTypeName
 import java.io.File
+import java.math.BigDecimal
+import java.net.URL
+import java.util.*
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.AnnotatedConstruct
@@ -83,6 +89,30 @@ abstract class KonProcessor : AbstractProcessor() {
 
             else -> throw Exception("Value cannot be cast as TypeMirror or Element")
         } as TypeElement
+    }
+
+    /**
+     * Returns whether or not the given [type] is a supported type
+     *
+     * Supported types are the types that can be added to a JsonObject/JsonArray
+     *
+     * Supported types do not include List, Arrays and Maps, these types should be checked
+     * separately
+     */
+    protected fun isSupportedType(type: TypeMirror): Boolean {
+        return isInt(type) || isShort(type) ||
+                isLong(type) || isBoolean(type) ||
+                isDouble(type) || isFloat(type) ||
+                isByte(type) || isString(type) ||
+                isSubclass(type, Number::class) ||
+                isSubclass(type, JsonObject::class) ||
+                isSubclass(type, JsonArray::class) ||
+                isSubclass(type, Calendar::class) ||
+                isSubclass(type, Date::class) ||
+                isSubclass(type, IntRange::class) ||
+                isSubclass(type, BigDecimal::class) ||
+                isSubclass(type, URL::class) ||
+                isSubclass(type, Enum::class)
     }
 
     /**
@@ -251,12 +281,12 @@ abstract class KonProcessor : AbstractProcessor() {
      * Returns the component type of the given [typeMirror] in case it is an Array or
      * a Collection, otherwise it returns null
      */
-    protected fun getComponentType(typeMirror: TypeMirror): TypeMirror? {
+    protected fun getComponentType(typeMirror: TypeMirror): TypeMirror {
         return when {
             isArray(typeMirror) -> (typeMirror as ArrayType).componentType
             isCollection(typeMirror) -> (typeMirror as DeclaredType).typeArguments[0]
 
-            else -> null
+            else -> throw Exception("Cannot get component type of ${typeMirror.simpleName}")
         }
     }
 
