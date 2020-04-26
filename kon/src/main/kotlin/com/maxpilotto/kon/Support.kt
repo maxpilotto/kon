@@ -69,32 +69,32 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
         Int::class -> when (value) {
             Int::class -> value
 
-            else -> cast<Int>(value).toInt()
+            else -> cast<Number>(value).toInt()
         }
         Long::class -> when (value) {
             Long::class -> value
 
-            else -> cast<Long>(value).toLong()
+            else -> cast<Number>(value).toLong()
         }
         Double::class -> when (value) {
             Double::class -> value
 
-            else -> cast<Double>(value).toDouble()
+            else -> cast<Number>(value).toDouble()
         }
         Float::class -> when (value) {
             Float::class -> value
 
-            else -> cast<Float>(value).toFloat()
+            else -> cast<Number>(value).toFloat()
         }
         Byte::class -> when (value) {
             Byte::class -> value
 
-            else -> cast<Byte>(value).toByte()
+            else -> cast<Number>(value).toByte()
         }
         Short::class -> when (value) {
             Short::class -> value
 
-            else -> cast<Short>(value).toShort()
+            else -> cast<Number>(value).toShort()
         }
         Char::class -> when (value) {
             Char::class -> value
