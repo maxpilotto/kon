@@ -85,7 +85,7 @@ abstract class Json {
         if (value == null) {
             return value
         } else {
-            if (value::class.java.isArray) {    //TODO Check if this works with IntArray (and the others) too
+            if (value::class.java.isArray) {
                 return JsonArray(value)
             }
         }

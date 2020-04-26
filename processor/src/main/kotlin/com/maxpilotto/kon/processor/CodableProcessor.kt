@@ -5,7 +5,6 @@ import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.annotations.Codable
 import com.maxpilotto.kon.processor.extensions.simpleName
-import com.maxpilotto.kon.util.JsonException
 import com.squareup.kotlinpoet.*
 import java.math.BigDecimal
 import java.net.URL
@@ -88,7 +87,6 @@ class CodableProcessor : KonProcessor() {
         return false
     }
 
-    private fun encodeClass(element: Element): List<FunSpec> {
         val doc = """
             Returns the calling object as a [JsonObject]
             
@@ -256,7 +254,7 @@ class CodableProcessor : KonProcessor() {
                 isString(type) -> parameters.add("""json.getString("$name")""")
                 isInt(type) -> parameters.add("""json.getInt("$name")""")
                 isLong(type) -> parameters.add("""json.getLong("$name")""")
-                isBoolean(type) -> parameters.add("""json.get Boolean("$name")""")
+                isBoolean(type) -> parameters.add("""json.getBoolean("$name")""")
                 isDouble(type) -> parameters.add("""json.getDouble("$name")""")
                 isFloat(type) -> parameters.add("""json.getFloat("$name")""")
                 isByte(type) -> parameters.add("""json.getByte("$name")""")
