@@ -17,6 +17,7 @@ package com.maxpilotto.kon.processor
 
 import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
+import com.maxpilotto.kon.annotations.JsonProperty
 import com.maxpilotto.kon.processor.extensions.simpleName
 import com.squareup.kotlinpoet.asTypeName
 import java.io.File
@@ -35,7 +36,13 @@ import javax.lang.model.type.TypeKind
 import javax.lang.model.type.TypeMirror
 import kotlin.reflect.KClass
 
-typealias PropertiesBlock = (prop: Element, name: String, type: TypeMirror, isLast: Boolean) -> Unit
+typealias PropertiesBlock = (
+    prop: Element,
+    name: String,
+    type: TypeMirror,
+    isLast: Boolean,
+    annotation: JsonProperty?
+) -> Unit
 
 /**
  * Base Processor class used to process Kon's annotations
@@ -296,15 +303,20 @@ abstract class KonProcessor : AbstractProcessor() {
      */
     protected inline fun getProperties(element: Element, block: PropertiesBlock) {
         val elements = element.enclosedElements.filter {
-            it.kind == ElementKind.FIELD && it.simpleName.toString() != "Companion"
+            it.kind == ElementKind.FIELD &&
+                    it.simpleName.toString() != "Companion" &&
+                    it.getAnnotation(JsonProperty::class.java)?.let {
+                        !it.isIgnored
+                    } ?: true
         }
 
         for ((i, prop) in elements.withIndex()) {
             val name = prop.simpleName.toString()
             val type = prop.asType()
             val last = i == elements.lastIndex
+            val annotation = prop.getAnnotation(JsonProperty::class.java)
 
-            block(prop, name, type, last)
+            block(prop, name, type, last, annotation)
         }
     }
 

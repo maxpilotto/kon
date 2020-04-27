@@ -87,6 +87,7 @@ class CodableProcessor : KonProcessor() {
         return false
     }
 
+    private fun encodeClass(element: Element): List<FunSpec> {  //TODO Add method for list decoding/encoding
         val doc = """
             Returns the calling object as a [JsonObject]
             
@@ -116,19 +117,22 @@ class CodableProcessor : KonProcessor() {
             .returns(JsonObject::class)
         val isKotlin = isKotlinClass(element)
 
-        getProperties(element) { prop, name, type, _ ->
+        getProperties(element) { prop, name, type, _, annotation ->
             val isPublic = prop.modifiers.contains(Modifier.PUBLIC)
             val getter = if (isKotlin || isPublic) {
                 "data.$name"
             } else {
                 "data.get${name.capitalize()}()"
             }
+            val actualName = annotation?.let {
+                if (it.name.isNotEmpty()) it.name else name
+            } ?: name
 
             when {
                 // The property is one of the type that are supported by the JsonObject and don't need any
                 // special action, they can be directly added to the object
                 isSupportedType(type) || isMap(type) -> {
-                    method.addStatement("""json.set("$name",$getter)""")  //TODO Add the transform for all types
+                    method.addStatement("""json.set("$actualName",$getter)""")  //TODO Add the transform for all types
                 }
 
                 //TODO Enum, Date and Calendar need to specify the way they're written
@@ -139,9 +143,9 @@ class CodableProcessor : KonProcessor() {
                     val component = getComponentType(type)
 
                     if (isSupportedType(component)) {
-                        method.addStatement("""json.set("$name",$getter)""")
+                        method.addStatement("""json.set("$actualName",$getter)""")
                     } else {
-                        method.addStatement("""json.set("$name",${encodeCollection(component, getter)})""")
+                        method.addStatement("""json.set("$actualName",${encodeCollection(component, getter)})""")
                     }
                 }
 
@@ -157,7 +161,7 @@ class CodableProcessor : KonProcessor() {
                         """transform($getter) ?: $getter.toString()"""
                     }
 
-                    method.addStatement("""json.set("$name",$transform)""")
+                    method.addStatement("""json.set("$actualName",$transform)""")
                 }
             }
         }
@@ -248,57 +252,61 @@ class CodableProcessor : KonProcessor() {
             .returns(element.asType().asTypeName())
         val parameters = CodeBlock.builder()
 
-        getProperties(element) { prop, name, type, isLast ->
+        getProperties(element) { prop, name, type, isLast, annotation ->
+            val actualName = annotation?.let {
+                if (it.name.isNotEmpty()) it.name else name
+            } ?: name
+
             when {
                 // Supported types that do not require additional parsing
-                isString(type) -> parameters.add("""json.getString("$name")""")
-                isInt(type) -> parameters.add("""json.getInt("$name")""")
-                isLong(type) -> parameters.add("""json.getLong("$name")""")
-                isBoolean(type) -> parameters.add("""json.getBoolean("$name")""")
-                isDouble(type) -> parameters.add("""json.getDouble("$name")""")
-                isFloat(type) -> parameters.add("""json.getFloat("$name")""")
-                isByte(type) -> parameters.add("""json.getByte("$name")""")
-                isShort(type) -> parameters.add("""json.getShort("$name")""")
-                isChar(type) -> parameters.add("""json.getChar("$name")""")
-                isSubclass(type, BigDecimal::class) -> parameters.add("""json.getBigDecimal("$name")""")
-                isSubclass(type, Number::class) -> parameters.add("""json.getNumber("$name")""")
-                isSubclass(type, JsonObject::class) -> parameters.add("""json.getJsonObject("$name")""")
-                isSubclass(type, JsonArray::class) -> parameters.add("""json.getJsonArray("$name")""")
-                isSubclass(type, IntRange::class) -> parameters.add("""json.getRange("$name")""")
-                isSubclass(type, URL::class) -> parameters.add("""json.getURL("$name")""")
+                isString(type) -> parameters.add("""json.getString("$actualName")""")
+                isInt(type) -> parameters.add("""json.getInt("$actualName")""")
+                isLong(type) -> parameters.add("""json.getLong("$actualName")""")
+                isBoolean(type) -> parameters.add("""json.getBoolean("$actualName")""")
+                isDouble(type) -> parameters.add("""json.getDouble("$actualName")""")
+                isFloat(type) -> parameters.add("""json.getFloat("$actualName")""")
+                isByte(type) -> parameters.add("""json.getByte("$actualName")""")
+                isShort(type) -> parameters.add("""json.getShort("$actualName")""")
+                isChar(type) -> parameters.add("""json.getChar("$actualName")""")
+                isSubclass(type, BigDecimal::class) -> parameters.add("""json.getBigDecimal("$actualName")""")
+                isSubclass(type, Number::class) -> parameters.add("""json.getNumber("$actualName")""")
+                isSubclass(type, JsonObject::class) -> parameters.add("""json.getJsonObject("$actualName")""")
+                isSubclass(type, JsonArray::class) -> parameters.add("""json.getJsonArray("$actualName")""")
+                isSubclass(type, IntRange::class) -> parameters.add("""json.getRange("$actualName")""")
+                isSubclass(type, URL::class) -> parameters.add("""json.getURL("$actualName")""")
 
                 // Date & Calendar      //FIXME Add the formats/locale
-                isSubclass(type, Date::class) -> parameters.add("""json.getDate("$name")""")
-                isSubclass(type, Calendar::class) -> parameters.add("""json.getCalendar("$name")""")
+                isSubclass(type, Date::class) -> parameters.add("""json.getDate("$actualName")""")
+                isSubclass(type, Calendar::class) -> parameters.add("""json.getCalendar("$actualName")""")
 
                 // Enum //FIXME Add the format
-                isEnum(type) -> parameters.add("""json.getEnum("$name")""")
+                isEnum(type) -> parameters.add("""json.getEnum("$actualName")""")
 
                 // Collection
                 isCollection(type) -> {
-                    parameters.add("""json.getList("$name") { ${decodeCollection(getComponentType(type))} }""")
+                    parameters.add("""json.getList("$actualName") { ${decodeCollection(getComponentType(type))} }""")
                 }
 
                 // Array
                 isArray(type) -> {
-                    parameters.add("""json.getList("$name") { ${decodeCollection(getComponentType(type))} }.toTypedArray()""")
+                    parameters.add("""json.getList("$actualName") { ${decodeCollection(getComponentType(type))} }.toTypedArray()""")
                 }
 
                 // Map
                 isMap(type) -> {
-                    parameters.add("""json.getJsonObject("$name").toTypedMap()""")
+                    parameters.add("""json.getJsonObject("$actualName").toTypedMap()""")
                 }
 
                 // Unsupported type
                 else -> {
                     if (hasAnnotation(prop, Codable::class)) {
-                        parameters.add("""${getDecoder(prop)}.decode(json.getJsonObject("$name"))""")
+                        parameters.add("""${getDecoder(prop)}.decode(json.getJsonObject("$actualName"))""")
                     } else {
                         if (hasAnnotation(prop, Nullable::class)) {
-                            parameters.add("""transform(json.getJsonObject("$name")) as ${type.simpleName}? ?: null""")
+                            parameters.add("""transform(json.getJsonObject("$actualName")) as ${type.simpleName}? ?: null""")
                         } else {
                             parameters.add(
-                                """transform(json.getJsonObject("$name")) as ${type.simpleName}? ?: throw JsonException(""%S"")""",
+                                """transform(json.getJsonObject("$actualName")) as ${type.simpleName}? ?: throw JsonException(""%S"")""",
                                 "Class ${type.simpleName} needs to be marked as Codable or parsed using the transform block"
                             )
                         }
