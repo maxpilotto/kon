@@ -3,7 +3,7 @@ package com.maxpilotto.kon.processor
 import com.google.auto.service.AutoService
 import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
-import com.maxpilotto.kon.annotations.Codable
+import com.maxpilotto.kon.annotations.JsonEncodable
 import com.maxpilotto.kon.processor.extensions.simpleName
 import com.squareup.kotlinpoet.*
 import java.math.BigDecimal
@@ -18,10 +18,10 @@ import javax.lang.model.type.TypeMirror
 import kotlin.reflect.KClass
 
 /**
- * Processor which task is to handle all classes marked with the [Codable] annotation
+ * Processor which task is to handle all classes marked with the [JsonEncodable] annotation
  */
 @AutoService(Processor::class)
-class CodableProcessor : KonProcessor() {
+class EncodableProcessor : KonProcessor() {
     private val transformLambda = LambdaTypeName.get(
         null,
         listOf(
@@ -37,12 +37,12 @@ class CodableProcessor : KonProcessor() {
         .build()
 
     override fun getSupportedAnnotationTypes() = mutableSetOf(
-        Codable::class.java.canonicalName
+        JsonEncodable::class.java.canonicalName
     )
 
     override fun process(kClass: KClass<*>, elements: Set<Element>): Boolean {
         when (kClass) {
-            Codable::class -> {
+            JsonEncodable::class -> {
                 for (element in elements) {
                     val packageName = processingEnv.elementUtils.getPackageOf(element).toString()
                     val fileName = element.simpleName.toString()
@@ -92,10 +92,10 @@ class CodableProcessor : KonProcessor() {
             Returns the calling object as a [JsonObject]
             
             If any of the properties is not supported by the [JsonObject]'s [JsonObject.set] method and it 
-            is not marked as Codable, the toString() method of that instance will be called and that
+            is not marked as [JsonEncodable], the toString() method of that instance will be called and that
             property will be saved as a String
             
-            The [transform] block can be used to encode objects that are not marked as Codable,
+            The [transform] block can be used to encode objects that are not marked as [JsonEncodable],
             this block should return the value as it should be saved, generally a 
             JsonObject, a String or a Number
         """.trimIndent()
@@ -151,11 +151,11 @@ class CodableProcessor : KonProcessor() {
 
                 // The property type is not supported
                 //
-                // If the property's class is marked as Codable, the encode() method will be called,
+                // If the property's class is marked as JsonEncodable, the encode() method will be called,
                 // otherwise the transform block will be called and if that block returns a null object
                 // the toString() method will be used
                 else -> {
-                    val transform = if (hasAnnotation(prop, Codable::class)) {
+                    val transform = if (hasAnnotation(prop, JsonEncodable::class)) {
                         """${getEncoder(prop)}.encode($getter)"""
                     } else {
                         """transform($getter) ?: $getter.toString()"""
@@ -196,7 +196,7 @@ class CodableProcessor : KonProcessor() {
             }
 
             else -> {
-                if (hasAnnotation(component, Codable::class)) {
+                if (hasAnnotation(component, JsonEncodable::class)) {
                     code.add("""${getEncoder(component)}.encode(it).toString()""")
                 } else {
                     code.add("""(transform(it) ?: it).toString()""")
@@ -212,10 +212,10 @@ class CodableProcessor : KonProcessor() {
             Creates an instance of ${element.asType().simpleName} from the given [json]
             
             If any of the properties is not supported by the [JsonObject]'s [JsonObject.set] method,
-            it is not marked as Codable and it is nullable then null will be returned, otherwise
+            it is not marked as [JsonEncodable] and it is nullable then null will be returned, otherwise
             an exception is thrown
             
-            The [transform] block can be used to decode objects that are not marked as Codable
+            The [transform] block can be used to decode objects that are not marked as [JsonEncodable]
         """.trimIndent()
         val invokeString = FunSpec.builder("invoke")
             .addKdoc(doc)
@@ -299,7 +299,7 @@ class CodableProcessor : KonProcessor() {
 
                 // Unsupported type
                 else -> {
-                    if (hasAnnotation(prop, Codable::class)) {
+                    if (hasAnnotation(prop, JsonEncodable::class)) {
                         parameters.add("""${getDecoder(prop)}.decode(json.getJsonObject("$actualName"))""")
                     } else {
                         if (hasAnnotation(prop, Nullable::class)) {
@@ -307,7 +307,7 @@ class CodableProcessor : KonProcessor() {
                         } else {
                             parameters.add(
                                 """transform(json.getJsonObject("$actualName")) as ${type.simpleName}? ?: throw JsonException(""%S"")""",
-                                "Class ${type.simpleName} needs to be marked as Codable or parsed using the transform block"
+                                "Class ${type.simpleName} needs to be marked as JsonEncodable or parsed using the transform block"
                             )
                         }
                     }
@@ -377,7 +377,7 @@ class CodableProcessor : KonProcessor() {
 
             // Unsupported type
             else -> {
-                if (hasAnnotation(component, Codable::class)) {
+                if (hasAnnotation(component, JsonEncodable::class)) {
                     code.add("${getDecoder(component)}.decode(it as JsonObject)")
                 } else {
                     if (hasAnnotation(component, Nullable::class)) {
@@ -385,7 +385,7 @@ class CodableProcessor : KonProcessor() {
                     } else {
                         code.add(
                             """transform(cast<JsonObject>(it)) as ${component.simpleName}? ?: throw JsonException(""%S"")""",
-                            "Class ${component.simpleName} needs to be marked as Codable or parsed using the transform block"
+                            "Class ${component.simpleName} needs to be marked as JsonEncodable or parsed using the transform block"
                         )
                     }
                 }

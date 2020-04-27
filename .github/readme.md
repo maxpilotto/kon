@@ -66,9 +66,9 @@ The following is a table showing the supported types, how they're stored inside 
 //TODO
 
 #### Automatic encoding
-The `Codable` annotation will automatically generated an extension for the marked class, which can be used to encode the object
+The `JsonEncodable` annotation will automatically generated an extension for the marked class, which can be used to encode the object
 ```kotlin
-@Codable
+@JsonEncodable
 data class Author(
     val firstName: String,
     val lastName: String,

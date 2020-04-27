@@ -1,8 +1,8 @@
 package com.maxpilotto.kon.samples.encoding
 
-import com.maxpilotto.kon.annotations.Codable
+import com.maxpilotto.kon.annotations.JsonEncodable
 
-@Codable
+@JsonEncodable
 data class Author(
     val firstName: String,
     val lastName: String,

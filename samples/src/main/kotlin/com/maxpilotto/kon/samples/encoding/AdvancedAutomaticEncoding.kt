@@ -16,7 +16,7 @@
 package com.maxpilotto.kon.samples.encoding
 
 import com.maxpilotto.kon.JsonObject
-import com.maxpilotto.kon.annotations.Codable
+import com.maxpilotto.kon.annotations.JsonEncodable
 import java.util.*
 
 data class Genre(
@@ -24,12 +24,13 @@ data class Genre(
     val name: String
 )
 
-@Codable
+@JsonEncodable
 data class Book(
     val title: String,
     val year: Int,
     val author: Author,
     val date: Date = Date(),
+    val array: Array<Int> = arrayOf(1,2,3),
     val genres: List<List<Genre>> = listOf(
         listOf(
             Genre(0, "Dystopian Fiction"),
