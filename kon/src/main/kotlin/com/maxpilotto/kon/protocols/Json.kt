@@ -124,4 +124,8 @@ abstract class Json {
     // showType, shows the type of the property
     // useBraces, shows {properties} instead of JsonObject(properties), enabled by default
     abstract fun prettify(): String
+
+    companion object {
+        const val DATE_FORMAT = "yyyy-MM-dd"
+    }
 }

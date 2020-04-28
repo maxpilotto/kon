@@ -1,6 +1,7 @@
 package com.maxpilotto.kon
 
 import com.maxpilotto.kon.extensions.Calendar
+import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
 import java.math.BigDecimal
 import java.net.URL
@@ -23,7 +24,7 @@ inline fun <reified T : Any> cast(value: Any?): T {
  */
 inline fun <reified T : Any> castDate(
     value: Any?,
-    dateFormat: DateFormat = DateFormat.getDateInstance()
+    dateFormat: DateFormat = SimpleDateFormat(Json.DATE_FORMAT)
 ): T {
     return castDate(value, dateFormat, T::class)
 }
