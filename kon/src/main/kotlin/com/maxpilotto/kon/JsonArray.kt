@@ -215,6 +215,14 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     /**
+     * Creates a [JsonObject] with one single property which value is this
+     * [JsonArray] and with identifier [key]
+     */
+    fun toJsonObject(key: String): JsonObject {
+        return JsonObject(key to this)
+    }
+
+    /**
      * Returns the unwrapped value at the given [index]
      */
     fun getValue(index: Int): Any? {

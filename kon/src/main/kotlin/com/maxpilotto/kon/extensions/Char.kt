@@ -15,10 +15,16 @@
  */
 package com.maxpilotto.kon.extensions
 
+/**
+ * Returns whether or not this Char is inside the given [string]
+ */
 internal fun Char.inside(string: String): Boolean {
     return string.indexOf(this) >= 0
 }
 
+/**
+ * Returns whether or not this Char is not inside the given [string]
+ */
 internal fun Char.notInside(string: String): Boolean {
     return !inside(string)
 }

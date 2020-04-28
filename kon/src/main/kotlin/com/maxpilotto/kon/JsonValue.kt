@@ -59,7 +59,7 @@ class JsonValue : Json {
     val isNull: Boolean
         get() = this == NULL
 
-    constructor(value: Any? = null) {       //TODO Limit the usage of the JsonValue to the library only
+    internal constructor(value: Any? = null) {
         this.content = if (value is JsonValue) {
             value.content
         } else {

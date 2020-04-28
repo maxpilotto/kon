@@ -15,6 +15,8 @@
  */
 package com.maxpilotto.kon.extensions
 
+import com.maxpilotto.kon.JsonArray
+import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.JsonValue
 
 /**
@@ -35,3 +37,23 @@ fun Any?.toJsonValue(): JsonValue {
         else -> JsonValue(this)
     }
 }
+
+/**
+ * Returns a [JsonObject] created from this string
+ */
+fun String.toJsonObject() = JsonObject(this)
+
+/**
+ * Returns a [JsonObject] created from this map
+ */
+fun <K,V> Map<K,V>.toJsonObject() = JsonObject(this)
+
+/**
+ * Returns a [JsonArray] created from this string
+ */
+fun String.toJsonArray() = JsonArray(this)
+
+/**
+ * Returns a [JsonArray] created from this collection
+ */
+fun <E> Collection<E>.toJsonArray() = JsonArray(this)
