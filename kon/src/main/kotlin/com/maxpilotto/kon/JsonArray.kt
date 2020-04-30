@@ -114,11 +114,11 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun set(index: Int, element: Any?): Any? {
-        return list.set(index, wrap(unwrap(element)))
+        return list.set(index, wrap(element))
     }
 
     override fun contains(element: Any?): Boolean {
-        return list.contains(unwrap(element))
+        return list.contains(wrap(element))
     }
 
     override fun containsAll(elements: Collection<Any?>): Boolean {
@@ -126,7 +126,7 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun indexOf(element: Any?): Int {
-        return list.indexOf(unwrap(element))
+        return list.indexOf(wrap(element))
     }
 
     override fun isEmpty(): Boolean {
@@ -138,15 +138,15 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun lastIndexOf(element: Any?): Int {
-        return list.lastIndexOf(unwrap(element))
+        return list.lastIndexOf(wrap(element))
     }
 
     override fun add(element: Any?): Boolean {
-        return list.add(unwrap(element))
+        return list.add(wrap(element))
     }
 
     override fun add(index: Int, element: Any?) {
-        return list.add(index, unwrap(element))
+        return list.add(index, wrap(element))
     }
 
     override fun addAll(index: Int, elements: Collection<Any?>): Boolean {
@@ -170,7 +170,7 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun remove(element: Any?): Boolean {
-        return list.remove(unwrap(element))
+        return list.remove(wrap(element))
     }
 
     override fun removeAll(elements: Collection<Any?>): Boolean {
@@ -190,7 +190,7 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     operator fun plusAssign(element: Any?) {    //TODO Add more utilities like this
-        add(unwrap(element))
+        add(wrap(element))
     }
 
     operator fun plusAssign(elements: Collection<Any?>) {
@@ -198,7 +198,7 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     operator fun minusAssign(element: Any?) {
-        remove(unwrap(element))
+        remove(wrap(element))
     }
 
     operator fun minusAssign(elements: Collection<Any?>) {

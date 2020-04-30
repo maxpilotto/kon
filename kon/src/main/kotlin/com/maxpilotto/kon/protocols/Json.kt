@@ -64,52 +64,46 @@ abstract class Json {
     }
 
     /**
-     * Unwraps the given [value] if it is inside a [JsonValue],
-     * otherwise it will return the [value] itself
+     * Wraps or converts the given [value] to a type supported by the [JsonObject] and [JsonArray]
      *
-     * This is a handy method that handles the type check
-     */
-    protected fun unwrap(value: Any?): Any? {
-        if (value is JsonValue) {
-            return value.content
-        }
-
-        return value
-    }
-
-    /**
-     * Wraps the given [value] inside a [JsonObject] or [JsonArray]
-     * if needed
+     * This will unwrap the [value] if it is inside a [JsonValue]
      */
     protected fun wrap(value: Any?): Any? {
+        println("Value: $value \t\t\t\t\t\t\t class: ${value?.let { it::class }}")
+
         if (value == null) {
             return value
-        } else {
-            if (value::class.java.isArray) {
-                return JsonArray(value)
-            }
+        }
+
+        if (value::class.java.isArray) {
+            return JsonArray(value)
         }
 
         return when (value) {
+            is JsonValue -> wrap(value.content)
+
             is Collection<*> -> JsonArray(value)
             is Map<*, *> -> JsonObject(value)
+
+            is JsonObject,
+            is JsonArray,
             is Int,
             is Short,
             is Long,
             is Double,
             is Float,
             is Byte,
+            is BigDecimal,
             is Number,
-            is String,
-            is JsonObject,
-            is JsonArray,
+            is String -> value
+
+            is Char,
             is Boolean,
-            is Calendar,
+            is Calendar,    //TODO Use reflection to get the JsonDate
             is Date,
             is IntRange,
-            is BigDecimal,
             is URL,
-            is Enum<*> -> value
+            is Enum<*> -> value.toString()
 
             else -> throw JsonException("${value::class.java.simpleName} can't be added to a JsonArray or JsonObject")
         }

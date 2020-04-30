@@ -137,7 +137,7 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     override fun set(key: String, element: Any?) {
-        map[key] = wrap(unwrap(element))
+        map[key] = wrap(element)
     }
 
     /**
@@ -254,7 +254,7 @@ class JsonObject : Json {   //TODO Add value observer
      * Returns whether or not the given [value] is present
      */
     fun has(value: Any?): Boolean {
-        return map.containsValue(unwrap(value))
+        return map.containsValue(wrap(value))
     }
 
     /**
