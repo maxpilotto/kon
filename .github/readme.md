@@ -55,7 +55,9 @@ The following is a table showing the supported types, how they're stored inside 
 | IntRange | String, Number | String, Number, IntRange | "0..20", "20", 20 |
 | BigDecimal | String, Number | String, Number, BigDecimal | "0.000003", 0.000003 |
 | URL | String | String, URL | "https://www.google.com" |
-| Enum | String, Number | String, Number, Enum | 1, "0", "Value1", "VALUE_1" | 
+| Enum | String, Number | String, Number, Enum | 1, "0", "Value1", "VALUE_1" |
+
+Note: the `timestamp` is interpreted in milliseconds, following the `Date` and `Calendar` logic
 
 ## Usage
 

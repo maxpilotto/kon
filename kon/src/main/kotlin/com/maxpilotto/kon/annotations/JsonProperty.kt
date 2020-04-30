@@ -1,23 +1,20 @@
 package com.maxpilotto.kon.annotations
 
+import com.maxpilotto.kon.JsonObject
+
 /**
- * # Property
+ * Annotation used to customize a Json property in a Kotlin/Java class
  *
- * Annotation used to mark a Json property and customize it
+ * @param name Identifier of the property, this is the name that will be used
+ * to read/write a property from and into a [JsonObject]
  *
- * ### Name
- *
- * The [name] is the identifier of the property in the Json string, by default this is set as the same
- * as the class' field name
- *
- * ### Ignoring properties
- *
- * A field can be ignored by setting the [isIgnored] value to true, this will not encode/decode the field
+ * @param isIgnored Whether or not this property should be read/written in a [JsonObject]
+ * when encoding/decoding an object
  */
 @Target(AnnotationTarget.FIELD)
-@Retention(AnnotationRetention.SOURCE)
+@Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
-annotation class JsonProperty (
+annotation class JsonProperty(
     val name: String = "",
     val isIgnored: Boolean = false
 )

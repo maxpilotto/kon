@@ -3,11 +3,16 @@ package com.maxpilotto.kon.processor
 import com.google.auto.service.AutoService
 import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
+import com.maxpilotto.kon.annotations.JsonDate
 import com.maxpilotto.kon.annotations.JsonEncodable
+import com.maxpilotto.kon.annotations.JsonProperty
+import com.maxpilotto.kon.extensions.getFormat
+import com.maxpilotto.kon.extensions.getLocale
 import com.maxpilotto.kon.processor.extensions.simpleName
 import com.squareup.kotlinpoet.*
 import java.math.BigDecimal
 import java.net.URL
+import java.text.SimpleDateFormat
 import java.util.*
 import javax.annotation.Nullable
 import javax.annotation.processing.Processor
@@ -58,8 +63,9 @@ class EncodableProcessor : KonProcessor() {
                     val file = FileSpec.builder(packageName, fileName)
                         .addImport("$BASE_PACKAGE.extensions", "toJsonValue")
                         .addImport("$BASE_PACKAGE.util", "JsonException")
+                        .addImport(BASE_PACKAGE, "localeFor")
                         .addImport(BASE_PACKAGE, "JsonArray")
-                        .addImport(BASE_PACKAGE, "JsonObject")
+                        .addImport(BASE_PACKAGE, "JsonObject")  //TODO Import these only if needed
                         .addImport(BASE_PACKAGE, "cast")
                         .addImport(BASE_PACKAGE, "castDate")
                         .addType(
@@ -129,6 +135,34 @@ class EncodableProcessor : KonProcessor() {
             } ?: name
 
             when {
+                // Date & Calendar
+                isSubclass(type, Date::class) || isSubclass(type, Calendar::class) -> {
+                    val isDateType = isSubclass(type, Date::class)
+                    val date = prop.getAnnotation(JsonDate::class.java)
+
+                    if (date == null || date.isTimestamp) {
+                        if (isDateType) {
+                            method.addStatement("""json.set("$actualName",$getter.time)""")
+                        } else {
+                            method.addStatement("""json.set("$actualName",$getter.timeInMillis)""")
+                        }
+                    } else {
+                        val format = """%T("${date.getFormat()}",localeFor("${date.getLocale()}"))"""
+
+                        if (isDateType) {
+                            method.addStatement(
+                                """json.set("$actualName",$format.format($getter))""",
+                                SimpleDateFormat::class
+                            )
+                        } else {
+                            method.addStatement(
+                                """json.set("$actualName",$format.format($getter.time))""",
+                                SimpleDateFormat::class
+                            )
+                        }
+                    }
+                }
+
                 // The property is one of the type that are supported by the JsonObject and don't need any
                 // special action, they can be directly added to the object
                 isSupportedType(type) || isMap(type) -> {
@@ -137,16 +171,13 @@ class EncodableProcessor : KonProcessor() {
 
                 //TODO Enum, Date and Calendar need to specify the way they're written
 
+
                 // The property is a collection or array, this must be resolved recursively
                 // due to the fact that it could be a list of lists or an array of arrays
                 isArray(type) || isCollection(type) -> {
                     val component = getComponentType(type)
 
-                    if (isSupportedType(component)) {
-                        method.addStatement("""json.set("$actualName",$getter)""")
-                    } else {
-                        method.addStatement("""json.set("$actualName",${encodeCollection(component, getter)})""")
-                    }
+                    method.addStatement("""json.set("$actualName",${encodeCollection(component, prop, getter)})""")
                 }
 
                 // The property type is not supported
@@ -176,11 +207,39 @@ class EncodableProcessor : KonProcessor() {
 
     private fun encodeCollection(
         component: TypeMirror,
+        root: Element,
         propName: String = "it"
     ): CodeBlock {
         val code = CodeBlock.builder()
 
         when {
+            isSubclass(component, Date::class) || isSubclass(component, Calendar::class) -> {
+                val isDateType = isSubclass(component, Date::class)
+                val date = root.getAnnotation(JsonDate::class.java)
+
+                if (date == null || date.isTimestamp) {
+                    if (isDateType) {
+                        code.add("it.time.toString()")
+                    } else {
+                        code.add("it.timeInMillis.toString()")
+                    }
+                } else {
+                    val format = """%T("${date.getFormat()}",localeFor("${date.getLocale()}"))"""
+
+                    if (isDateType) {
+                        code.add(
+                            "$format.format(it)",
+                            SimpleDateFormat::class
+                        )
+                    } else {
+                        code.add(
+                            "$format.format(it.time)",
+                            SimpleDateFormat::class
+                        )
+                    }
+                }
+            }
+
             isSupportedType(component) || isMap(component) -> {
                 code.add("it.toString()")
             }
@@ -188,11 +247,7 @@ class EncodableProcessor : KonProcessor() {
             //TODO Enum, Date and Calendar need to specify the way they're written
 
             isArray(component) || isCollection(component) -> {
-                code.add(encodeCollection(getComponentType(component)))
-            }
-
-            isMap(component) -> {
-                code.add("JsonObject(it).toString()")
+                code.add(encodeCollection(getComponentType(component), root))
             }
 
             else -> {
@@ -206,6 +261,21 @@ class EncodableProcessor : KonProcessor() {
 
         return CodeBlock.of("""$propName.joinToString(",","[","]",transform = { ${code.build()} })""")
     }
+
+    //TODO Add a keyTransform callback
+    //encode(keyTransform = { key, value
+    //      when (it) {
+    //          "firstName" -> {    // Key
+    //              value.capitalize()
+    //          }
+
+    //          "data/array" -> {   // Path
+    //              val array = value as JsonArray
+    //
+    //              Address(array[0], array[1], array[2])
+    //          }
+    //      }
+    // })
 
     private fun decodeClass(element: Element): List<FunSpec> {
         val doc = """
@@ -275,21 +345,39 @@ class EncodableProcessor : KonProcessor() {
                 isSubclass(type, IntRange::class) -> parameters.add("""json.getRange("$actualName")""")
                 isSubclass(type, URL::class) -> parameters.add("""json.getURL("$actualName")""")
 
-                // Date & Calendar      //FIXME Add the formats/locale
-                isSubclass(type, Date::class) -> parameters.add("""json.getDate("$actualName")""")
-                isSubclass(type, Calendar::class) -> parameters.add("""json.getCalendar("$actualName")""")
+                // Date & Calendar
+                isSubclass(type, Date::class) || isSubclass(type, Calendar::class) -> {
+                    val typeName = if (isSubclass(type, Date::class)) "Date" else "Calendar"
+                    val date = prop.getAnnotation(JsonDate::class.java)
+
+                    if (date == null || date.isTimestamp) {
+                        parameters.add("""json.get$typeName("$actualName")""")
+                    } else {
+                        parameters.add("""json.get$typeName("$actualName","${date.getFormat()}",localeFor("${date.getLocale()}"))""")
+                    }
+                }
 
                 // Enum //FIXME Add the format
                 isEnum(type) -> parameters.add("""json.getEnum("$actualName")""")
 
                 // Collection
                 isCollection(type) -> {
-                    parameters.add("""json.getList("$actualName") { ${decodeCollection(getComponentType(type))} }""")
+                    parameters.add(
+                        """json.getList("$actualName") { ${decodeCollection(
+                            getComponentType(type),
+                            prop
+                        )} }"""
+                    )
                 }
 
                 // Array
                 isArray(type) -> {
-                    parameters.add("""json.getList("$actualName") { ${decodeCollection(getComponentType(type))} }.toTypedArray()""")
+                    parameters.add(
+                        """json.getList("$actualName") { ${decodeCollection(
+                            getComponentType(type),
+                            prop
+                        )} }.toTypedArray()"""
+                    )
                 }
 
                 // Map
@@ -332,7 +420,7 @@ class EncodableProcessor : KonProcessor() {
         )
     }
 
-    private fun decodeCollection(component: TypeMirror): CodeBlock {
+    private fun decodeCollection(component: TypeMirror, root: Element): CodeBlock {
         val code = CodeBlock.builder()
 
         when {
@@ -346,28 +434,44 @@ class EncodableProcessor : KonProcessor() {
             isByte(component) -> code.add("cast<Byte>(it)")
             isShort(component) -> code.add("cast<Short>(it)")
             isChar(component) -> code.add("cast<Char>(it)")
-            isSubclass(component, BigDecimal::class) -> code.add("cast<BigDecimal>(it)")
+            isSubclass(component, BigDecimal::class) -> code.add("cast<%T>(it)", BigDecimal::class)
             isSubclass(component, Number::class) -> code.add("cast<Number>(it)")
             isSubclass(component, JsonObject::class) -> code.add("cast<JsonObject>(it)")
             isSubclass(component, JsonArray::class) -> code.add("cast<JsonArray>(it)")
             isSubclass(component, IntRange::class) -> code.add("cast<IntRange>(it)")
             isSubclass(component, URL::class) -> code.add("cast<URL>(it)")
 
-            // Date & Calendar      // FIXME This will only work with timestamps
-            isSubclass(component, Date::class) -> code.add("cast<Date>(it)")
-            isSubclass(component, Calendar::class) -> code.add("cast<Calendar>(it))")
+            // Date & Calendar
+            isSubclass(component, Date::class) || isSubclass(component, Calendar::class) -> {
+                val typeClass = if (isSubclass(component, Date::class)) Date::class else Calendar::class
+                val date = root.getAnnotation(JsonDate::class.java)
+
+                if (date == null || date.isTimestamp) {
+                    code.add("cast<%T>(it)", typeClass)
+                } else {
+                    code.add(
+                        """castDate<%T>(it,"${date.getFormat()}",localeFor("${date.getLocale()}"))""",
+                        typeClass
+                    )
+                }
+            }
 
             // Enum      //TODO Take the parameters from the annotation
             isEnum(component) -> code.add("it.toJsonValue().asEnum()")
 
             // Collection
             isCollection(component) -> {
-                code.add("cast<JsonArray>(it).toList{ ${decodeCollection(getComponentType(component))} }")
+                code.add("cast<JsonArray>(it).toList{ ${decodeCollection(getComponentType(component), root)} }")
             }
 
             // Array
             isArray(component) -> {
-                code.add("cast<JsonArray>(it).toList{ ${decodeCollection(getComponentType(component))} }.toTypedArray()")
+                code.add(
+                    "cast<JsonArray>(it).toList{ ${decodeCollection(
+                        getComponentType(component),
+                        root
+                    )} }.toTypedArray()"
+                )
             }
 
             // Map

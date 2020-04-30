@@ -177,3 +177,20 @@ fun <T : Any> castDate(value: Any?, dateFormat: DateFormat, type: KClass<T>): T 
 
     } as T
 }
+
+/**
+ * Returns a Locale instance using the given [tag]
+ */
+fun localeFor(tag: String): Locale {
+    require(tag.matches(Regex("[a-zA-z]{2,}[,_-]?[a-zA-z]*"))) {
+        Exception("Locale doesn't match the supported formats")
+    }
+
+    return Locale.forLanguageTag(
+        tag.replace(
+            Regex("[,_]"),
+            "-"
+        )
+    )
+}
+}
