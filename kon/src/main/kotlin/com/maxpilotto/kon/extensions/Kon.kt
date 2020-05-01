@@ -20,6 +20,29 @@ import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.JsonValue
 
 /**
+ * Returns this entity as a pretty printable output
+ */
+//TODO Add indent option
+//TODO Add dateFormat, so all dates can print accordingly
+//TODO Add params
+// showType, shows the type of the property
+// useBraces, shows {properties} instead of JsonObject(properties), enabled by default
+fun Any?.prettify(): String {
+    return when (this) {
+        is String -> "\"$this\""
+        is JsonValue -> content.prettify()
+        is JsonObject -> entries.joinToString(",", "{", "}", transform = {
+            """"${it.key}":${it.prettify()}"""
+        })
+        is JsonArray -> toList().joinToString(",", "[", "]", transform = {
+            it.prettify()
+        })
+
+        else -> toString()
+    }
+}
+
+/**
  * Wraps this value around a [JsonValue]
  *
  * If this is already a [JsonValue] no extra wrapping will be applied
@@ -46,7 +69,7 @@ fun String.toJsonObject() = JsonObject(this)
 /**
  * Returns a [JsonObject] created from this map
  */
-fun <K,V> Map<K,V>.toJsonObject() = JsonObject(this)
+fun <K, V> Map<K, V>.toJsonObject() = JsonObject(this)
 
 /**
  * Returns a [JsonArray] created from this string

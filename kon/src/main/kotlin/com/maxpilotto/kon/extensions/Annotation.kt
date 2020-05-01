@@ -2,8 +2,6 @@ package com.maxpilotto.kon.extensions
 
 import com.maxpilotto.kon.annotations.JsonDate
 import com.maxpilotto.kon.protocols.Json
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import java.util.*
 
 fun JsonDate.getLocale(): Locale {  //TODO Return a string

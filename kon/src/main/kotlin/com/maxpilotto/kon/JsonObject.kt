@@ -16,6 +16,7 @@
 package com.maxpilotto.kon
 
 import com.maxpilotto.kon.extensions.Calendar
+import com.maxpilotto.kon.extensions.prettify
 import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
@@ -118,18 +119,6 @@ class JsonObject : Json {   //TODO Add value observer
 
     override fun toString(): String {
         return prettify()
-    }
-
-    override fun prettify(): String {
-        return map.entries.joinToString(",", "{", "}", transform = {
-            val value = when (it.value) {
-                is String -> "\"${it.value}\""
-
-                else -> it.value.toString()
-            }
-
-            """"${it.key}":$value"""
-        })
     }
 
     override fun get(key: String): JsonValue {
