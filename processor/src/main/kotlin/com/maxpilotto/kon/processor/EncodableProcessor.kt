@@ -5,7 +5,6 @@ import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.annotations.JsonDate
 import com.maxpilotto.kon.annotations.JsonEncodable
-import com.maxpilotto.kon.annotations.JsonProperty
 import com.maxpilotto.kon.extensions.getFormat
 import com.maxpilotto.kon.extensions.getLocale
 import com.maxpilotto.kon.processor.extensions.simpleName
@@ -62,6 +61,7 @@ class EncodableProcessor : KonProcessor() {
                         .build()
                     val file = FileSpec.builder(packageName, fileName)
                         .addImport("$BASE_PACKAGE.extensions", "toJsonValue")
+                        .addImport("$BASE_PACKAGE.extensions", "prettify")
                         .addImport("$BASE_PACKAGE.util", "JsonException")
                         .addImport(BASE_PACKAGE, "localeFor")
                         .addImport(BASE_PACKAGE, "JsonArray")
@@ -189,12 +189,10 @@ class EncodableProcessor : KonProcessor() {
                 // otherwise the transform block will be called and if that block returns a null object
                 // the toString() method will be used
                 else -> {
-                    out(type)
-
                     val transform = if (hasAnnotation(type, JsonEncodable::class)) {
                         """${getEncoder(prop)}.encode($getter)"""   //TODO Use the invoke
                     } else {
-                        """transform($getter) ?: $getter.toString()"""
+                        """transform($getter) ?: $getter.prettify()"""
                     }
 
                     method.addStatement("""json.set("$actualName",$transform)""")
@@ -224,29 +222,30 @@ class EncodableProcessor : KonProcessor() {
 
                 if (date == null || date.isTimestamp) {
                     if (isDateType) {
-                        code.add("it.time.toString()")
+                        code.add("it.time.prettify()")
                     } else {
-                        code.add("it.timeInMillis.toString()")
+                        code.add("it.timeInMillis.prettify()")
                     }
                 } else {
                     val format = """%T("${date.getFormat()}",localeFor("${date.getLocale()}"))"""
 
                     if (isDateType) {
                         code.add(
-                            "$format.format(it)",
+                            "$format.format(it).prettify()",
                             SimpleDateFormat::class
                         )
                     } else {
                         code.add(
-                            "$format.format(it.time)",
+                            "$format.format(it.time).prettify()",
                             SimpleDateFormat::class
                         )
                     }
                 }
             }
 
+
             isSupportedType(component) -> {
-                code.add("it.toString()")
+                code.add("it.prettify()")
             }
 
             //TODO Enum, Date and Calendar need to specify the way they're written
@@ -257,9 +256,9 @@ class EncodableProcessor : KonProcessor() {
 
             else -> {
                 if (hasAnnotation(component, JsonEncodable::class)) {
-                    code.add("""${getEncoder(component)}.encode(it).toString()""")
+                    code.add("""${getEncoder(component)}.encode(it).prettify()""")
                 } else {
-                    code.add("""(transform(it) ?: it).toString()""")
+                    code.add("""(transform(it) ?: it).prettify()""")
                 }
             }
         }
@@ -448,15 +447,15 @@ class EncodableProcessor : KonProcessor() {
 
             // Date & Calendar
             isSubclass(component, Date::class) || isSubclass(component, Calendar::class) -> {
-                val typeClass = if (isSubclass(component, Date::class)) Date::class else Calendar::class
+//                val typeClass = if (isSubclass(component, Date::class)) Date::class else Calendar::class
                 val date = root.getAnnotation(JsonDate::class.java)
 
                 if (date == null || date.isTimestamp) {
-                    code.add("cast<%T>(it)", typeClass)
+                    code.add("cast<%T>(it)", component)
                 } else {
                     code.add(
                         """castDate<%T>(it,"${date.getFormat()}",localeFor("${date.getLocale()}"))""",
-                        typeClass
+                        component
                     )
                 }
             }

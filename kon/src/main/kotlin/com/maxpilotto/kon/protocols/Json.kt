@@ -18,6 +18,7 @@ package com.maxpilotto.kon.protocols
 import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.JsonValue
+import com.maxpilotto.kon.extensions.prettify
 import com.maxpilotto.kon.util.JsonException
 import java.math.BigDecimal
 import java.net.URL

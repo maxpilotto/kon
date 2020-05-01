@@ -18,6 +18,7 @@ package com.maxpilotto.kon.extensions
 import com.maxpilotto.kon.JsonArray
 import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.JsonValue
+import java.net.URL
 
 /**
  * Returns this entity as a pretty printable output
@@ -29,10 +30,14 @@ import com.maxpilotto.kon.JsonValue
 // useBraces, shows {properties} instead of JsonObject(properties), enabled by default
 fun Any?.prettify(): String {
     return when (this) {
-        is String -> "\"$this\""
+        is String,
+        is IntRange,
+        is URL,
+        is Enum<*> -> "\"$this\""
+
         is JsonValue -> content.prettify()
         is JsonObject -> entries.joinToString(",", "{", "}", transform = {
-            """"${it.key}":${it.prettify()}"""
+            "\"${it.key}\":${it.value.prettify()}"
         })
         is JsonArray -> toList().joinToString(",", "[", "]", transform = {
             it.prettify()

@@ -55,7 +55,50 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
 
             else -> value.toString()
         }
+        Int::class -> when (value) {
+            is Int -> value
 
+            else -> cast<Number>(value).toInt()
+        }
+        Long::class -> when (value) {
+            is Long -> value
+
+            else -> cast<Number>(value).toLong()
+        }
+        Double::class -> when (value) {
+            is Double -> value
+
+            else -> cast<Number>(value).toDouble()
+        }
+        Float::class -> when (value) {
+            is Float -> value
+
+            else -> cast<Number>(value).toFloat()
+        }
+        Byte::class -> when (value) {
+            is Byte -> value
+
+            else -> cast<Number>(value).toByte()
+        }
+        Short::class -> when (value) {
+            is Short -> value
+
+            else -> cast<Number>(value).toShort()
+        }
+        Char::class -> {
+            when (value) {
+                is String -> value.single()
+
+                else -> cast<Number>(value).toChar()
+            }
+        }
+        Boolean::class -> when (value) {
+            is Boolean -> value
+            is Number -> value.toInt() != 0
+            is String -> value.equals("true", true)
+
+            else -> throw JsonException("Value cannot be cast/parsed as Boolean")
+        }
         Number::class -> when (value) {
             is Number -> value
             is String -> try {
@@ -67,55 +110,11 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
             else -> throw JsonException("Value cannot be cast/parsed as Number")
         }
 
-        Int::class -> when (value) {
-            Int::class -> value
-
-            else -> cast<Number>(value).toInt()
-        }
-        Long::class -> when (value) {
-            Long::class -> value
-
-            else -> cast<Number>(value).toLong()
-        }
-        Double::class -> when (value) {
-            Double::class -> value
-
-            else -> cast<Number>(value).toDouble()
-        }
-        Float::class -> when (value) {
-            Float::class -> value
-
-            else -> cast<Number>(value).toFloat()
-        }
-        Byte::class -> when (value) {
-            Byte::class -> value
-
-            else -> cast<Number>(value).toByte()
-        }
-        Short::class -> when (value) {
-            Short::class -> value
-
-            else -> cast<Number>(value).toShort()
-        }
-        Char::class -> when (value) {
-            Char::class -> value
-            String::class -> (value as String).single()
-
-            else -> cast<Number>(value).toChar()
-        }
-        Boolean::class -> when (value) {
-            is Boolean -> value
-            is Number -> value.toInt() != 0
-            is String -> value.equals("true", true)
-
-            else -> throw JsonException("Value cannot be cast/parsed as Boolean")
-        }
-
         Date::class -> castDate(value)
         Calendar::class -> Calendar(cast<Date>(value))
 
         IntRange::class -> when (value) {
-            is IntRange -> value
+            is IntRange -> value    //TODO Remove the base type since it's not used
             is Number -> IntRange(0, value.toInt())
             is String -> if (value.matches(Regex("""[0-9]+\.\.[0-9]+"""))) {
                 with(value.split("..")) {
@@ -156,7 +155,7 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
  *
  * @param dateFormat Format used to parse a [Date]/[Calendar] instance if the value is a String
  */
-fun <T : Any> castDate(value: Any?, dateFormat: DateFormat, type: KClass<T>): T {
+fun <T : Any> castDate(value: Any?, dateFormat: DateFormat, type: KClass<T>): T {   //TODO Use this one and delete the others
     return when (type) {
         Date::class -> when (value) {
             is Date -> value
@@ -170,8 +169,7 @@ fun <T : Any> castDate(value: Any?, dateFormat: DateFormat, type: KClass<T>): T 
 
             else -> throw JsonException("Value cannot be cast/parsed as Date/Calendar")
         }
-
-        Calendar::class -> castDate(value, dateFormat)
+        Calendar::class -> Calendar(castDate<Date>(value, dateFormat))  //FIXME What the hell is this ?!?
 
         else -> throw JsonException("Value cannot be cast/parsed as Date/Calendar")
 
