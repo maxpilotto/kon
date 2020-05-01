@@ -69,8 +69,6 @@ abstract class Json {
      * This will unwrap the [value] if it is inside a [JsonValue]
      */
     protected fun wrap(value: Any?): Any? {
-        println("Value: $value \t\t\t\t\t\t\t class: ${value?.let { it::class }}")
-
         if (value == null) {
             return value
         }

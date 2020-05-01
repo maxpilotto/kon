@@ -165,7 +165,7 @@ class EncodableProcessor : KonProcessor() {
 
                 // The property is one of the type that are supported by the JsonObject and don't need any
                 // special action, they can be directly added to the object
-                isSupportedType(type) || isMap(type) -> {
+                isSupportedType(type) -> {
                     method.addStatement("""json.set("$actualName",$getter)""")  //TODO Add the transform for all types
                 }
 
@@ -177,7 +177,10 @@ class EncodableProcessor : KonProcessor() {
                 isArray(type) || isCollection(type) -> {
                     val component = getComponentType(type)
 
-                    method.addStatement("""json.set("$actualName",${encodeCollection(component, prop, getter)})""")
+                    method.addStatement(
+                        """json.set("$actualName",%T(${encodeCollection(component, prop, getter)}))""",
+                        JsonArray::class
+                    )
                 }
 
                 // The property type is not supported
@@ -186,8 +189,10 @@ class EncodableProcessor : KonProcessor() {
                 // otherwise the transform block will be called and if that block returns a null object
                 // the toString() method will be used
                 else -> {
-                    val transform = if (hasAnnotation(prop, JsonEncodable::class)) {
-                        """${getEncoder(prop)}.encode($getter)"""
+                    out(type)
+
+                    val transform = if (hasAnnotation(type, JsonEncodable::class)) {
+                        """${getEncoder(prop)}.encode($getter)"""   //TODO Use the invoke
                     } else {
                         """transform($getter) ?: $getter.toString()"""
                     }
@@ -240,7 +245,7 @@ class EncodableProcessor : KonProcessor() {
                 }
             }
 
-            isSupportedType(component) || isMap(component) -> {
+            isSupportedType(component) -> {
                 code.add("it.toString()")
             }
 
@@ -457,7 +462,7 @@ class EncodableProcessor : KonProcessor() {
             }
 
             // Enum      //TODO Take the parameters from the annotation
-            isEnum(component) -> code.add("it.toJsonValue().asEnum()")
+            isEnum(component) -> code.add("it.toJsonValue().asEnum<%T>()", component)
 
             // Collection
             isCollection(component) -> {

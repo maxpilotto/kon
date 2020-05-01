@@ -111,6 +111,7 @@ abstract class KonProcessor : AbstractProcessor() {
                 isLong(type) || isBoolean(type) ||
                 isDouble(type) || isFloat(type) ||
                 isByte(type) || isString(type) ||
+                isMap(type) || isChar(type) ||
                 isSubclass(type, Number::class) ||
                 isSubclass(type, JsonObject::class) ||
                 isSubclass(type, JsonArray::class) ||
