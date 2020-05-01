@@ -1,7 +1,8 @@
 package com.maxpilotto.kon.annotations
 
-import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.protocols.Json
+import com.maxpilotto.kon.JsonObject
+import java.lang.annotation.RetentionPolicy
 import java.util.*
 
 /**

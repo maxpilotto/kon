@@ -105,6 +105,14 @@ class JsonValue : Json {
         }
     }
 
+    override fun prettify(): String {
+        return when (content) {
+            is String -> "\"$content\""
+
+            else -> content.toString()
+        }
+    }
+
     /**
      * Returns this value as a String, if the value is not a String
      * then the [toString] method will be called
