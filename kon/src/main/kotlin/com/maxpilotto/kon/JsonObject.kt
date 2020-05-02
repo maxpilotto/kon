@@ -122,13 +122,7 @@ class JsonObject : Json {   //TODO Add value observer
 
     override fun prettify(): String {
         return map.entries.joinToString(",", "{", "}", transform = {
-            val value = when (it.value) {
-                is String -> "\"${it.value}\""
-
-                else -> it.value.toString()
-            }
-
-            """"${it.key}":$value"""
+            "\"${it.key}\":${stringify(it.value)}"
         })
     }
 

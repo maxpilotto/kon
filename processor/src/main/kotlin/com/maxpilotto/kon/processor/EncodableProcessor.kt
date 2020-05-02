@@ -61,8 +61,8 @@ class EncodableProcessor : KonProcessor() {
                         .build()
                     val file = FileSpec.builder(packageName, fileName)
                         .addImport("$BASE_PACKAGE.extensions", "toJsonValue")
-                        .addImport("$BASE_PACKAGE.extensions", "prettify")
                         .addImport("$BASE_PACKAGE.util", "JsonException")
+                        .addImport(BASE_PACKAGE, "stringify")
                         .addImport(BASE_PACKAGE, "localeFor")
                         .addImport(BASE_PACKAGE, "JsonArray")
                         .addImport(BASE_PACKAGE, "JsonObject")  //TODO Import these only if needed
@@ -192,7 +192,7 @@ class EncodableProcessor : KonProcessor() {
                     val transform = if (hasAnnotation(type, JsonEncodable::class)) {
                         """${getEncoder(prop)}.encode($getter)"""   //TODO Use the invoke
                     } else {
-                        """transform($getter) ?: $getter.prettify()"""
+                        """transform($getter) ?: $getter"""
                     }
 
                     method.addStatement("""json.set("$actualName",$transform)""")
@@ -222,30 +222,29 @@ class EncodableProcessor : KonProcessor() {
 
                 if (date == null || date.isTimestamp) {
                     if (isDateType) {
-                        code.add("it.time.prettify()")
+                        code.add("it.time")
                     } else {
-                        code.add("it.timeInMillis.prettify()")
+                        code.add("it.timeInMillis")
                     }
                 } else {
                     val format = """%T("${date.getFormat()}",localeFor("${date.getLocale()}"))"""
 
                     if (isDateType) {
                         code.add(
-                            "$format.format(it).prettify()",
+                            "stringify($format.format(it))",
                             SimpleDateFormat::class
                         )
                     } else {
                         code.add(
-                            "$format.format(it.time).prettify()",
+                            "stringify($format.format(it.time))",
                             SimpleDateFormat::class
                         )
                     }
                 }
             }
 
-
             isSupportedType(component) -> {
-                code.add("it.prettify()")
+                code.add("stringify(it)")
             }
 
             //TODO Enum, Date and Calendar need to specify the way they're written
@@ -256,9 +255,9 @@ class EncodableProcessor : KonProcessor() {
 
             else -> {
                 if (hasAnnotation(component, JsonEncodable::class)) {
-                    code.add("""${getEncoder(component)}.encode(it).prettify()""")
+                    code.add("""${getEncoder(component)}.encode(it).toString()""")
                 } else {
-                    code.add("""(transform(it) ?: it).prettify()""")
+                    code.add("""(transform(it) ?: it).toString()""")
                 }
             }
         }

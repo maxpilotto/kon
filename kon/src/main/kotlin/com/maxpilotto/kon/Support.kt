@@ -155,7 +155,11 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
  *
  * @param dateFormat Format used to parse a [Date]/[Calendar] instance if the value is a String
  */
-fun <T : Any> castDate(value: Any?, dateFormat: DateFormat, type: KClass<T>): T {   //TODO Use this one and delete the others
+fun <T : Any> castDate(
+    value: Any?,
+    dateFormat: DateFormat,
+    type: KClass<T>
+): T {   //TODO Use this one and delete the others
     return when (type) {
         Date::class -> when (value) {
             is Date -> value
@@ -191,4 +195,19 @@ fun localeFor(tag: String): Locale {
         )
     )
 }
+/**
+ * Returns a stringified version of given [value] in a Json supported
+ * format
+ *
+ * This will wrap strings and chars around the double quotes
+ */
+fun stringify(value: Any?): String {
+    return when (value) {
+        is IntRange,
+        is Enum<*>,
+        is URL,
+        is String -> "\"$value\""
+
+        else -> value.toString()
+    }
 }

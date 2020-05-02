@@ -101,11 +101,7 @@ class JsonArray : Json, MutableList<Any?> {
 
     override fun prettify(): String {
         return list.joinToString(",", "[", "]", transform = {
-            when (it) {
-                is String -> "\"$it\""
-
-                else -> it.toString()
-            }
+            stringify(it)
         })
     }
 

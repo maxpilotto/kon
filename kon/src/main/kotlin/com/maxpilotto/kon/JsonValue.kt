@@ -106,11 +106,7 @@ class JsonValue : Json {
     }
 
     override fun prettify(): String {
-        return when (content) {
-            is String -> "\"$content\""
-
-            else -> content.toString()
-        }
+        return stringify(content)
     }
 
     /**
