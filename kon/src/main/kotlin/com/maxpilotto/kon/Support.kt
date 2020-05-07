@@ -88,7 +88,6 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
         Calendar::class -> Calendar(cast<Date>(value))
 
         IntRange::class -> when (value) {
-            is IntRange -> value    //TODO Remove the base type since it's not used
             is Number -> IntRange(0, value.toInt())
             is String -> if (value.matches(Regex("""[0-9]+\.\.[0-9]+"""))) {
                 with(value.split("..")) {
@@ -111,7 +110,6 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
             else -> throw JsonException("Value cannot be cast/parsed as BigDecimal")
         }
         URL::class -> when (value) {
-            is URL -> value
             is String -> URL(value)
 
             else -> throw JsonException("Value cannot be cast/parsed as URL")

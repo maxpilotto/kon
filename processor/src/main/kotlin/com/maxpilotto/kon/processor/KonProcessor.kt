@@ -102,9 +102,9 @@ abstract class KonProcessor : AbstractProcessor() {
      * Returns whether or not the given [type] is a supported type
      *
      * Supported types are the types that can be added to a JsonObject/JsonArray
+     * without any additional processing
      *
-     * Supported types do not include List, Arrays and Maps, these types should be checked
-     * separately
+     * Supported types do not include List or Array
      */
     protected fun isSupportedType(type: TypeMirror): Boolean {
         return isInt(type) || isShort(type) ||
@@ -112,7 +112,6 @@ abstract class KonProcessor : AbstractProcessor() {
                 isDouble(type) || isFloat(type) ||
                 isByte(type) || isString(type) ||
                 isMap(type) || isChar(type) ||
-                isEnum(type) ||
                 isSubclass(type, Number::class) ||
                 isSubclass(type, JsonObject::class) ||
                 isSubclass(type, JsonArray::class) ||
@@ -120,16 +119,8 @@ abstract class KonProcessor : AbstractProcessor() {
                 isSubclass(type, Date::class) ||
                 isSubclass(type, IntRange::class) ||
                 isSubclass(type, BigDecimal::class) ||
+                isSubclass(type, Enum::class) ||
                 isSubclass(type, URL::class)
-    }
-
-    /**
-     * Returns whether or not the given [typeMirror] is a primitive type
-     *
-     * This does not include boxed types, like Integer or Long
-     */
-    protected fun isPrimitive(typeMirror: TypeMirror): Boolean {
-        return typeMirror.kind.isPrimitive
     }
 
     /**
@@ -248,13 +239,6 @@ abstract class KonProcessor : AbstractProcessor() {
      */
     protected fun isMap(typeMirror: TypeMirror): Boolean {
         return isSubclass(typeMirror, Map::class.java)
-    }
-
-    /**
-     * Returns whether or not the given [typeMirror] is an Enum
-     */
-    protected fun isEnum(typeMirror: TypeMirror): Boolean { //TODO Remove useless methods like this
-        return isSubclass(typeMirror, Enum::class)
     }
 
     /**
