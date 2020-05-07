@@ -18,32 +18,6 @@ inline fun <reified T : Any> cast(value: Any?): T {
 }
 
 /**
- * Casts or parses the given [value] into a Date or Calendar
- *
- * @param dateFormat Format used to parse a [Date]/[Calendar] instance if the value is a String
- */
-inline fun <reified T : Any> castDate(
-    value: Any?,
-    dateFormat: DateFormat = SimpleDateFormat(Json.DATE_FORMAT)
-): T {
-    return castDate(value, dateFormat, T::class)
-}
-
-/**
- * Casts or parses the given [value] into a Date or Calendar
- *
- * @param format Format used to parse a [Date]/[Calendar] instance if the value is a String
- * @param locale Locale used to created the date format
- */
-inline fun <reified T : Any> castDate(
-    value: Any?,
-    format: String,
-    locale: Locale = Locale.getDefault()
-): T {
-    return castDate(value, SimpleDateFormat(format, locale))
-}
-
-/**
  * Casts or parses the given [value] into the specified [type]
  *
  * This will not take care of Enums and Date/Calendar parsed with the date formats
@@ -155,6 +129,32 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
  *
  * @param dateFormat Format used to parse a [Date]/[Calendar] instance if the value is a String
  */
+inline fun <reified T : Any> castDate(
+    value: Any?,
+    dateFormat: DateFormat = SimpleDateFormat(Json.DATE_FORMAT)
+): T {
+    return castDate(value, dateFormat, T::class)
+}
+
+/**
+ * Casts or parses the given [value] into a Date or Calendar
+ *
+ * @param format Format used to parse a [Date]/[Calendar] instance if the value is a String
+ * @param locale Locale used to created the date format
+ */
+inline fun <reified T : Any> castDate(
+    value: Any?,
+    format: String,
+    locale: Locale = Locale.getDefault()
+): T {
+    return castDate(value, SimpleDateFormat(format, locale))
+}
+
+/**
+ * Casts or parses the given [value] into a Date or Calendar
+ *
+ * @param dateFormat Format used to parse a [Date]/[Calendar] instance if the value is a String
+ */
 fun <T : Any> castDate(
     value: Any?,
     dateFormat: DateFormat,
@@ -195,6 +195,7 @@ fun localeFor(tag: String): Locale {
         )
     )
 }
+
 /**
  * Returns a stringified version of given [value] in a Json supported
  * format
