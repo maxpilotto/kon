@@ -117,9 +117,6 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
             else -> throw JsonException("Value cannot be cast/parsed as URL")
         }
 
-        // This will also take care of the following types
-        // + JsonObject
-        // + JsonArray
         else -> value
     } as T
 }
@@ -178,6 +175,39 @@ fun <T : Any> castDate(
         else -> throw JsonException("Value cannot be cast/parsed as Date/Calendar")
 
     } as T
+}
+
+/**
+ * Casts or parses the given [value] into an Enum of type [T]
+ *
+ * The value can be either a Number or a String, if the value is a Number the enum constant
+ * at index [value] will be returned
+ *
+ * If the value is a String, the enum constant that matches the string will be returned, the case
+ * will be ignored
+ */
+inline fun <reified T : Enum<T>> castEnum(value: Any?): T {
+    val enumClass = T::class.java
+    val enumValues = enumClass.enumConstants
+
+    return if (value is Number) {
+        val ordinal = cast<Int>(value)
+
+        if (ordinal < enumValues.size) {
+            enumValues[ordinal]
+        }
+        else {
+            throw JsonException("Index out of bound for enum ${enumClass.simpleName}: Size: ${enumValues.size}, Index: $ordinal")
+        }
+    } else {
+        for (enum in enumValues) {
+            if (enum.name.equals(value.toString(), true)) {
+                return enum
+            }
+        }
+
+        throw JsonException("No enum constant for value $value")
+    }
 }
 
 /**

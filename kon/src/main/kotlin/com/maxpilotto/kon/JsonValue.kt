@@ -17,7 +17,6 @@ package com.maxpilotto.kon
 
 import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
-import com.maxpilotto.kon.util.JsonException
 import java.math.BigDecimal
 import java.net.URL
 import java.text.DateFormat
@@ -289,28 +288,8 @@ class JsonValue : Json {
      * The [transform] block is used to decided how the Enum value should be
      * read and used to parse the enum
      */
-    inline fun <reified T : Enum<T>> asEnum(
-        transform: (String) -> String = { it.capitalize() }
-    ): T {
-        val clazz = T::class.java
-
-        return if (content is T) {
-            content as T
-        } else if (content is Number) {
-            val enums = clazz.enumConstants
-            val ordinal = asInt()
-
-            if (ordinal < enums.size) {
-                enums[ordinal]
-            } else {
-                throw JsonException("Ordinal value out of range for enum ${clazz.simpleName}")
-            }
-        } else {
-            java.lang.Enum.valueOf(
-                clazz,
-                transform(asString())
-            )
-        }
+    inline fun <reified T : Enum<T>> asEnum(): T {
+        return castEnum(content)
     }
 
     /**
@@ -477,10 +456,8 @@ class JsonValue : Json {
     /**
      * Returns this value as a List of Enum of type [T]
      */
-    inline fun <reified T : Enum<T>> asEnumList(
-        transform: (String) -> String = { it.capitalize() }
-    ): List<T> {
-        return asJsonArray().toEnumList(transform)
+    inline fun <reified T : Enum<T>> asEnumList(): List<T> {
+        return asJsonArray().toEnumList()
     }
 
     /**

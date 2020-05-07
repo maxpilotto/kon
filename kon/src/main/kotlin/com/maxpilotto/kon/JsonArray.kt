@@ -433,13 +433,11 @@ class JsonArray : Json, MutableList<Any?> {
     /**
      * Returns this [JsonArray] as a List of Enum of type [T]
      */
-    inline fun <reified T : Enum<T>> toEnumList(    //TODO Improve support for Java with @JavaOverloads
-        transform: (String) -> String = { it.capitalize() }
-    ): List<T> {
+    inline fun <reified T : Enum<T>> toEnumList(): List<T> {    //TODO Improve support for Java with @JavaOverloads
         val list = toList()
 
         return List(size) {
-            list[it].toJsonValue().asEnum<T>(transform)
+            castEnum<T>(it)
         }
     }
 

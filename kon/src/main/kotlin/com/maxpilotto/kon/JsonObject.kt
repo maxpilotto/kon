@@ -799,11 +799,8 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * @throws JsonException If the given key doesn't exist
      */
-    inline fun <reified T : Enum<T>> getEnum(
-        key: String,
-        transform: (String) -> String = { it.capitalize() }
-    ): T {
-        return get(key).asEnum(transform)
+    inline fun <reified T : Enum<T>> getEnum(key: String): T {
+        return get(key).asEnum()
     }
 
     /**
@@ -812,16 +809,8 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * THe [default] value can be an Enum of type [T] or a String
      */
-    inline fun <reified T : Enum<T>> optEnum(
-        key: String,
-        default: Any,
-        transform: (String) -> String = { it.capitalize() }
-    ): T {
-        require(default is T || default is String) {
-            JsonException("The default value must be either an Enum value or a String")
-        }
-
-        return opt(key, default).asEnum(transform)
+    inline fun <reified T : Enum<T>> optEnum(key: String, default: Any): T {
+        return opt(key, default).asEnum()
     }
 
     /**
@@ -1311,11 +1300,8 @@ class JsonObject : Json {   //TODO Add value observer
      *
      * @throws JsonException If the given key doesn't exist
      */
-    inline fun <reified T : Enum<T>> getEnumList(
-        key: String,
-        transform: (String) -> String = { it.capitalize() }
-    ): List<T> {
-        return get(key).asEnumList(transform)
+    inline fun <reified T : Enum<T>> getEnumList(key: String): List<T> {
+        return get(key).asEnumList()
     }
 
     /**
@@ -1326,10 +1312,9 @@ class JsonObject : Json {   //TODO Add value observer
      */
     inline fun <reified T : Enum<T>> optEnumList(
         key: String,
-        default: List<T>? = emptyList(),
-        transform: (String) -> String = { it.capitalize() }
+        default: List<T>? = emptyList()
     ): List<T>? {
-        return opt(key, default).asEnumList(transform)
+        return opt(key, default).asEnumList()
     }
 
     /**

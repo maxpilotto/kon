@@ -68,6 +68,7 @@ class EncodableProcessor : KonProcessor() {
                         .addImport(BASE_PACKAGE, "JsonObject")  //TODO Import these only if needed
                         .addImport(BASE_PACKAGE, "cast")
                         .addImport(BASE_PACKAGE, "castDate")
+                        .addImport(BASE_PACKAGE, "castEnum")
                         .addType(
                             TypeSpec.classBuilder("${fileName}Encoder")
                                 .primaryConstructor(privateConstructor)
@@ -169,9 +170,6 @@ class EncodableProcessor : KonProcessor() {
                     method.addStatement("""json.set("$actualName",$getter)""")  //TODO Add the transform for all types
                 }
 
-                //TODO Enum, Date and Calendar need to specify the way they're written
-
-
                 // The property is a collection or array, this must be resolved recursively
                 // due to the fact that it could be a list of lists or an array of arrays
                 isArray(type) || isCollection(type) -> {
@@ -246,8 +244,6 @@ class EncodableProcessor : KonProcessor() {
             isSupportedType(component) -> {
                 code.add("stringify(it)")
             }
-
-            //TODO Enum, Date and Calendar need to specify the way they're written
 
             isArray(component) || isCollection(component) -> {
                 code.add(encodeCollection(getComponentType(component), root))
@@ -341,6 +337,7 @@ class EncodableProcessor : KonProcessor() {
                 isByte(type) -> parameters.add("""json.getByte("$actualName")""")
                 isShort(type) -> parameters.add("""json.getShort("$actualName")""")
                 isChar(type) -> parameters.add("""json.getChar("$actualName")""")
+                isEnum(type) -> parameters.add("""json.getEnum("$actualName")""")
                 isSubclass(type, BigDecimal::class) -> parameters.add("""json.getBigDecimal("$actualName")""")
                 isSubclass(type, Number::class) -> parameters.add("""json.getNumber("$actualName")""")
                 isSubclass(type, JsonObject::class) -> parameters.add("""json.getJsonObject("$actualName")""")
@@ -359,9 +356,6 @@ class EncodableProcessor : KonProcessor() {
                         parameters.add("""json.get$typeName("$actualName","${date.getFormat()}",localeFor("${date.getLocale()}"))""")
                     }
                 }
-
-                // Enum //FIXME Add the format
-                isEnum(type) -> parameters.add("""json.getEnum("$actualName")""")
 
                 // Collection
                 isCollection(type) -> {
@@ -437,6 +431,7 @@ class EncodableProcessor : KonProcessor() {
             isByte(component) -> code.add("cast<Byte>(it)")
             isShort(component) -> code.add("cast<Short>(it)")
             isChar(component) -> code.add("cast<Char>(it)")
+            isEnum(component) -> code.add("castEnum<%T>(it)", component)
             isSubclass(component, BigDecimal::class) -> code.add("cast<%T>(it)", BigDecimal::class)
             isSubclass(component, Number::class) -> code.add("cast<Number>(it)")
             isSubclass(component, JsonObject::class) -> code.add("cast<JsonObject>(it)")
@@ -446,7 +441,6 @@ class EncodableProcessor : KonProcessor() {
 
             // Date & Calendar
             isSubclass(component, Date::class) || isSubclass(component, Calendar::class) -> {
-//                val typeClass = if (isSubclass(component, Date::class)) Date::class else Calendar::class
                 val date = root.getAnnotation(JsonDate::class.java)
 
                 if (date == null || date.isTimestamp) {
@@ -458,9 +452,6 @@ class EncodableProcessor : KonProcessor() {
                     )
                 }
             }
-
-            // Enum      //TODO Take the parameters from the annotation
-            isEnum(component) -> code.add("it.toJsonValue().asEnum<%T>()", component)
 
             // Collection
             isCollection(component) -> {

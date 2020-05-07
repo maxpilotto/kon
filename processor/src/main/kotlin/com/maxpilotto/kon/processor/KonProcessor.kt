@@ -112,6 +112,7 @@ abstract class KonProcessor : AbstractProcessor() {
                 isDouble(type) || isFloat(type) ||
                 isByte(type) || isString(type) ||
                 isMap(type) || isChar(type) ||
+                isEnum(type) ||
                 isSubclass(type, Number::class) ||
                 isSubclass(type, JsonObject::class) ||
                 isSubclass(type, JsonArray::class) ||
@@ -119,8 +120,7 @@ abstract class KonProcessor : AbstractProcessor() {
                 isSubclass(type, Date::class) ||
                 isSubclass(type, IntRange::class) ||
                 isSubclass(type, BigDecimal::class) ||
-                isSubclass(type, URL::class) ||
-                isSubclass(type, Enum::class)
+                isSubclass(type, URL::class)
     }
 
     /**
@@ -253,7 +253,7 @@ abstract class KonProcessor : AbstractProcessor() {
     /**
      * Returns whether or not the given [typeMirror] is an Enum
      */
-    protected fun isEnum(typeMirror: TypeMirror): Boolean {
+    protected fun isEnum(typeMirror: TypeMirror): Boolean { //TODO Remove useless methods like this
         return isSubclass(typeMirror, Enum::class)
     }
 
@@ -324,5 +324,9 @@ abstract class KonProcessor : AbstractProcessor() {
     companion object {
         internal val BASE_PACKAGE = "com.maxpilotto.kon"
         internal val OPTIONAL_ANY = Any::class.asTypeName().copy(true)
+
+        fun out(any: Any?) {
+            File("jsonencodable_processor_log").appendText(any.toString() + "\n")
+        }
     }
 }
