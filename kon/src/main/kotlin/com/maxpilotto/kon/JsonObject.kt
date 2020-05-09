@@ -15,7 +15,6 @@
  */
 package com.maxpilotto.kon
 
-import com.maxpilotto.kon.extensions.Calendar
 import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
@@ -259,7 +258,7 @@ class JsonObject : Json {   //TODO Add value observer
     }
 
     /**
-     * Returns a copy of the map used internally, casted as the given type
+     * Returns a copy of the map used internally, as a Map of [K] and [V]
      */
     fun <K, V> toTypedMap(): Map<K, V> {
         return toMap() as Map<K, V>
@@ -658,7 +657,7 @@ class JsonObject : Json {   //TODO Add value observer
     ): Calendar? {
         return when (default) {
             is Calendar -> opt(key, default)
-            is Number -> opt(key, Calendar(default.toLong()))
+            is Number -> opt(key, calendarOf(default.toLong()))
 
             else -> throw JsonException("The default value must be either a Calendar or a Number type")
         }.asCalendar()
@@ -691,7 +690,7 @@ class JsonObject : Json {   //TODO Add value observer
     ): Calendar? {
         return when (default) {
             is Calendar -> opt(key, default)
-            is Number -> opt(key, Calendar(default.toLong()))
+            is Number -> opt(key, calendarOf(default.toLong()))
 
             else -> throw JsonException("The default value must be either a Calendar or a Number type")
         }.asCalendar(dateFormat)
@@ -726,7 +725,7 @@ class JsonObject : Json {   //TODO Add value observer
     ): Calendar? {
         return when (default) {
             is Calendar -> opt(key, default)
-            is Number -> opt(key, Calendar(default.toLong()))
+            is Number -> opt(key, calendarOf(default.toLong()))
 
             else -> throw JsonException("The default value must be either a Calendar or a Number type")
         }.asCalendar(format, locale)

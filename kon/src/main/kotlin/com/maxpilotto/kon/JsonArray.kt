@@ -237,7 +237,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toStringList(): List<String> {
         return List(size) {
-            cast<String>(list[it])
+            parse<String>(list[it])
         }
     }
 
@@ -246,7 +246,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toNumberList(): List<Number> {
         return List(size) {
-            cast<Number>(list[it])
+            parse<Number>(list[it])
         }
     }
 
@@ -255,7 +255,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toJsonObjectList(): List<JsonObject> {
         return List(size) {
-            cast<JsonObject>(list[it])
+            parse<JsonObject>(list[it])
         }
     }
 
@@ -264,7 +264,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toIntList(): List<Int> {
         return List(size) {
-            cast<Int>(list[it])
+            parse<Int>(list[it])
         }
     }
 
@@ -273,7 +273,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toLongList(): List<Long> {
         return List(size) {
-            cast<Long>(list[it])
+            parse<Long>(list[it])
         }
     }
 
@@ -282,7 +282,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toBooleanList(): List<Boolean> {
         return List(size) {
-            cast<Boolean>(list[it])
+            parse<Boolean>(list[it])
         }
     }
 
@@ -291,7 +291,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDoubleList(): List<Double> {
         return List(size) {
-            cast<Double>(list[it])
+            parse<Double>(list[it])
         }
     }
 
@@ -300,7 +300,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toFloatList(): List<Float> {
         return List(size) {
-            cast<Float>(list[it])
+            parse<Float>(list[it])
         }
     }
 
@@ -309,7 +309,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toByteList(): List<Byte> {
         return List(size) {
-            cast<Byte>(list[it])
+            parse<Byte>(list[it])
         }
     }
 
@@ -318,7 +318,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toShortList(): List<Short> {
         return List(size) {
-            cast<Short>(list[it])
+            parse<Short>(list[it])
         }
     }
 
@@ -327,7 +327,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCharList(): List<Char> {
         return List(size) {
-            cast<Char>(list[it])
+            parse<Char>(list[it])
         }
     }
 
@@ -336,7 +336,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDateList(): List<Date> {
         return List(size) {
-            cast<Date>(list[it])
+            parse<Date>(list[it])
         }
     }
 
@@ -345,7 +345,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDateList(dateFormat: DateFormat): List<Date> {
         return List(size) {
-            castDate<Date>(list[it], dateFormat)
+            parseDate<Date>(list[it], dateFormat)
         }
     }
 
@@ -366,7 +366,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCalendarList(): List<Calendar> {
         return List(size) {
-            cast<Calendar>(list[it])
+            parse<Calendar>(list[it])
         }
     }
 
@@ -375,7 +375,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCalendarList(dateFormat: DateFormat): List<Calendar> {
         return List(size) {
-            castDate<Calendar>(list[it], dateFormat)
+            parseDate<Calendar>(list[it], dateFormat)
         }
     }
 
@@ -396,7 +396,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toRangeList(): List<IntRange> {
         return List(size) {
-            cast<IntRange>(list[it])
+            parse<IntRange>(list[it])
         }
     }
 
@@ -405,7 +405,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toBigDecimalList(): List<BigDecimal> {
         return List(size) {
-            cast<BigDecimal>(list[it])
+            parse<BigDecimal>(list[it])
         }
     }
 
@@ -414,7 +414,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toURLList(): List<URL> {
         return List(size) {
-            cast<URL>(list[it])
+            parse<URL>(list[it])
         }
     }
 
@@ -437,7 +437,7 @@ class JsonArray : Json, MutableList<Any?> {
         val list = toList()
 
         return List(size) {
-            castEnum<T>(it)
+            parseEnum<T>(it)
         }
     }
 

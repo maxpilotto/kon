@@ -94,7 +94,7 @@ abstract class KonProcessor : AbstractProcessor() {
             is TypeMirror -> processingEnv.typeUtils.asElement(element)
             is Element -> getTypeElement(element.asType())
 
-            else -> throw Exception("Value cannot be cast as TypeMirror or Element")
+            else -> throw Exception("Value must be a TypeMirror or Element")
         } as TypeElement
     }
 

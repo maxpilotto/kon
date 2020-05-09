@@ -66,9 +66,9 @@ class EncodableProcessor : KonProcessor() {
                         .addImport(BASE_PACKAGE, "localeFor")
                         .addImport(BASE_PACKAGE, "JsonArray")
                         .addImport(BASE_PACKAGE, "JsonObject")  //TODO Import these only if needed
-                        .addImport(BASE_PACKAGE, "cast")
-                        .addImport(BASE_PACKAGE, "castDate")
-                        .addImport(BASE_PACKAGE, "castEnum")
+                        .addImport(BASE_PACKAGE, "parse")
+                        .addImport(BASE_PACKAGE, "parseDate")
+                        .addImport(BASE_PACKAGE, "parseEnum")
                         .addType(
                             TypeSpec.classBuilder("${fileName}Encoder")
                                 .primaryConstructor(privateConstructor)
@@ -422,32 +422,32 @@ class EncodableProcessor : KonProcessor() {
 
         when {
             // Supported types that do not require additional parsing
-            isString(component) -> code.add("cast<String>(it)")
-            isInt(component) -> code.add("cast<Int>(it)")
-            isLong(component) -> code.add("cast<Long>(it)")
-            isBoolean(component) -> code.add("cast<Boolean>(it)")
-            isDouble(component) -> code.add("cast<Double>(it)")
-            isFloat(component) -> code.add("cast<Float>(it)")
-            isByte(component) -> code.add("cast<Byte>(it)")
-            isShort(component) -> code.add("cast<Short>(it)")
-            isChar(component) -> code.add("cast<Char>(it)")
-            isSubclass(component, Enum::class) -> code.add("castEnum<%T>(it)", component)
-            isSubclass(component, BigDecimal::class) -> code.add("cast<%T>(it)", BigDecimal::class)
-            isSubclass(component, Number::class) -> code.add("cast<Number>(it) ")
-            isSubclass(component, JsonObject::class) -> code.add("cast<JsonObject>(it)")
-            isSubclass(component, JsonArray::class) -> code.add("cast<JsonArray>(it)")
-            isSubclass(component, IntRange::class) -> code.add("cast<IntRange>(it)")
-            isSubclass(component, URL::class) -> code.add("cast<URL>(it)")
+            isString(component) -> code.add("parse<String>(it)")
+            isInt(component) -> code.add("parse<Int>(it)")
+            isLong(component) -> code.add("parse<Long>(it)")
+            isBoolean(component) -> code.add("parse<Boolean>(it)")
+            isDouble(component) -> code.add("parse<Double>(it)")
+            isFloat(component) -> code.add("parse<Float>(it)")
+            isByte(component) -> code.add("parse<Byte>(it)")
+            isShort(component) -> code.add("parse<Short>(it)")
+            isChar(component) -> code.add("parse<Char>(it)")
+            isSubclass(component, Enum::class) -> code.add("parseEnum<%T>(it)", component)
+            isSubclass(component, BigDecimal::class) -> code.add("parse<%T>(it)", BigDecimal::class)
+            isSubclass(component, Number::class) -> code.add("parse<Number>(it) ")
+            isSubclass(component, JsonObject::class) -> code.add("parse<JsonObject>(it)")
+            isSubclass(component, JsonArray::class) -> code.add("parse<JsonArray>(it)")
+            isSubclass(component, IntRange::class) -> code.add("parse<IntRange>(it)")
+            isSubclass(component, URL::class) -> code.add("parse<URL>(it)")
 
             // Date & Calendar
             isSubclass(component, Date::class) || isSubclass(component, Calendar::class) -> {
                 val date = root.getAnnotation(JsonDate::class.java)
 
                 if (date == null || date.isTimestamp) {
-                    code.add("cast<%T>(it)", component)
+                    code.add("parse<%T>(it)", component)
                 } else {
                     code.add(
-                        """castDate<%T>(it,"${date.getFormat()}",localeFor("${date.getLocale()}"))""",
+                        """parseDate<%T>(it,"${date.getFormat()}",localeFor("${date.getLocale()}"))""",
                         component
                     )
                 }
@@ -455,13 +455,13 @@ class EncodableProcessor : KonProcessor() {
 
             // Collection
             isCollection(component) -> {
-                code.add("cast<JsonArray>(it).toList{ ${decodeCollection(getComponentType(component), root)} }")
+                code.add("parse<JsonArray>(it).toList{ ${decodeCollection(getComponentType(component), root)} }")
             }
 
             // Array
             isArray(component) -> {
                 code.add(
-                    "cast<JsonArray>(it).toList{ ${decodeCollection(
+                    "parse<JsonArray>(it).toList{ ${decodeCollection(
                         getComponentType(component),
                         root
                     )} }.toTypedArray()"
@@ -470,7 +470,7 @@ class EncodableProcessor : KonProcessor() {
 
             // Map
             isMap(component) -> {
-                code.add("cast<JsonObject>(it).toTypedMap()")
+                code.add("parse<JsonObject>(it).toTypedMap()")
             }
 
             // Unsupported type
@@ -479,10 +479,10 @@ class EncodableProcessor : KonProcessor() {
                     code.add("${getDecoder(component)}.decode(it as JsonObject)")
                 } else {
                     if (hasAnnotation(component, Nullable::class)) {
-                        code.add("transform(cast<JsonObject>(it)) as ${component.simpleName}? ?: null")
+                        code.add("transform(parse<JsonObject>(it)) as ${component.simpleName}? ?: null")
                     } else {
                         code.add(
-                            """transform(cast<JsonObject>(it)) as ${component.simpleName}? ?: throw JsonException(""%S"")""",
+                            """transform(parse<JsonObject>(it)) as ${component.simpleName}? ?: throw JsonException(""%S"")""",
                             "Class ${component.simpleName} needs to be marked as JsonEncodable or parsed using the transform block"
                         )
                     }

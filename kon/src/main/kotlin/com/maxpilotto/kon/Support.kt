@@ -1,6 +1,5 @@
 package com.maxpilotto.kon
 
-import com.maxpilotto.kon.extensions.Calendar
 import com.maxpilotto.kon.protocols.Json
 import com.maxpilotto.kon.util.JsonException
 import java.math.BigDecimal
@@ -11,18 +10,16 @@ import java.util.*
 import kotlin.reflect.KClass
 
 /**
- * Casts or parses the given [value] into the specified type
+ * Parses the given [value] into the specified type [T]
  */
-inline fun <reified T : Any> cast(value: Any?): T {
-    return cast(value, T::class)
+inline fun <reified T : Any> parse(value: Any?): T {
+    return parse(value, T::class)
 }
 
 /**
- * Casts or parses the given [value] into the specified [type]
- *
- * This will not take care of Enums and Date/Calendar parsed with the date formats
+ * Parses the given [value] into the specified [type]
  */
-fun <T : Any> cast(value: Any?, type: KClass<T>): T {
+fun <T : Any> parse(value: Any?, type: KClass<T>): T {
     return when (type) {
         String::class -> when (value) {
             is String -> value
@@ -32,38 +29,39 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
         Int::class -> when (value) {
             is Int -> value
 
-            else -> cast<Number>(value).toInt()
+            else -> parse<Number>(value).toInt()
         }
         Long::class -> when (value) {
             is Long -> value
 
-            else -> cast<Number>(value).toLong()
+            else -> parse<Number>(value).toLong()
         }
         Double::class -> when (value) {
             is Double -> value
 
-            else -> cast<Number>(value).toDouble()
+            else -> parse<Number>(value).toDouble()
         }
         Float::class -> when (value) {
             is Float -> value
 
-            else -> cast<Number>(value).toFloat()
+            else -> parse<Number>(value).toFloat()
         }
         Byte::class -> when (value) {
             is Byte -> value
 
-            else -> cast<Number>(value).toByte()
+            else -> parse<Number>(value).toByte()
         }
         Short::class -> when (value) {
             is Short -> value
 
-            else -> cast<Number>(value).toShort()
+            else -> parse<Number>(value).toShort()
         }
         Char::class -> {
             when (value) {
+                is Char -> value
                 is String -> value.single()
 
-                else -> cast<Number>(value).toChar()
+                else -> parse<Number>(value).toChar()
             }
         }
         Boolean::class -> when (value) {
@@ -71,7 +69,7 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
             is Number -> value.toInt() != 0
             is String -> value.equals("true", true)
 
-            else -> throw JsonException("Value cannot be cast/parsed as Boolean")
+            else -> throw JsonException("Value cannot be parsed into Boolean")
         }
         Number::class -> when (value) {
             is Number -> value
@@ -81,13 +79,14 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
                 throw JsonException("Cannot parse value as Number: ${e.message}")
             }
 
-            else -> throw JsonException("Value cannot be cast/parsed as Number")
+            else -> throw JsonException("Value cannot be parsed into Number")
         }
 
-        Date::class -> castDate(value)
-        Calendar::class -> Calendar(cast<Date>(value))
+        Date::class -> parseDate(value)
+        Calendar::class -> calendarOf(parse<Date>(value))
 
         IntRange::class -> when (value) {
+            is IntRange -> value
             is Number -> IntRange(0, value.toInt())
             is String -> if (value.matches(Regex("""[0-9]+\.\.[0-9]+"""))) {
                 with(value.split("..")) {
@@ -100,19 +99,20 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
                 IntRange(0, value.toInt())
             }
 
-            else -> throw JsonException("Value cannot be cast/parsed as IntRange")
+            else -> throw JsonException("Value cannot be parsed into IntRange")
         }
         BigDecimal::class -> when (value) {
             is BigDecimal -> value
             is Number -> BigDecimal(value.toDouble())
             is String -> BigDecimal(value)
 
-            else -> throw JsonException("Value cannot be cast/parsed as BigDecimal")
+            else -> throw JsonException("Value cannot be parsed into BigDecimal")
         }
         URL::class -> when (value) {
+            is URL -> value
             is String -> URL(value)
 
-            else -> throw JsonException("Value cannot be cast/parsed as URL")
+            else -> throw JsonException("Value cannot be parsed into URL")
         }
 
         else -> value
@@ -120,63 +120,60 @@ fun <T : Any> cast(value: Any?, type: KClass<T>): T {
 }
 
 /**
- * Casts or parses the given [value] into a Date or Calendar
- *
- * @param dateFormat Format used to parse a [Date]/[Calendar] instance if the value is a String
+ * Parses the given [value] into the specified a [Date] or [Calendar], using the
+ * [dateFormat] to parse the value if needed
  */
-inline fun <reified T : Any> castDate(
+inline fun <reified T : Any> parseDate(
     value: Any?,
     dateFormat: DateFormat = SimpleDateFormat(Json.DATE_FORMAT)
 ): T {
-    return castDate(value, dateFormat, T::class)
+    return parseDate(value, dateFormat, T::class)
 }
 
 /**
- * Casts or parses the given [value] into a Date or Calendar
- *
- * @param format Format used to parse a [Date]/[Calendar] instance if the value is a String
- * @param locale Locale used to created the date format
+ * Parses the given [value] into the specified a [Date] or [Calendar], using the
+ * [format] and [locale] to parse the value if needed
  */
-inline fun <reified T : Any> castDate(
     value: Any?,
     format: String,
     locale: Locale = Locale.getDefault()
 ): T {
-    return castDate(value, SimpleDateFormat(format, locale))
+    return parseDate(value, SimpleDateFormat(format, locale), T::class)
 }
 
 /**
- * Casts or parses the given [value] into a Date or Calendar
- *
- * @param dateFormat Format used to parse a [Date]/[Calendar] instance if the value is a String
+ * Parses the given [value] into the specified a [Date] or [Calendar], using the
+ * [dateFormat] to parse the value if needed
  */
-fun <T : Any> castDate(
+fun <T : Any> parseDate(
     value: Any?,
     dateFormat: DateFormat,
     type: KClass<T>
-): T {   //TODO Use this one and delete the others
+): T {
     return when (type) {
         Date::class -> when (value) {
             is Date -> value
             is Calendar -> value.time
-            is Number -> Date(cast<Long>(value))
+            is Number -> Date(parse<Long>(value))
             is String -> try {
                 dateFormat.parse(value)
             } catch (e: Exception) {
                 throw JsonException(e.message)
             }
 
-            else -> throw JsonException("Value cannot be cast/parsed as Date/Calendar")
+            else -> throw JsonException("Value cannot be parsed as Date/Calendar")
         }
-        Calendar::class -> Calendar(castDate<Date>(value, dateFormat))  //FIXME What the hell is this ?!?
+        Calendar::class -> when (value) {
 
-        else -> throw JsonException("Value cannot be cast/parsed as Date/Calendar")
+            else -> calendarOf(parseDate<Date>(value, dateFormat))
+        }
+
 
     } as T
 }
 
 /**
- * Casts or parses the given [value] into an Enum of type [T]
+ * Parses the given [value] into an Enum of type [T]
  *
  * The value can be either a Number or a String, if the value is a Number the enum constant
  * at index [value] will be returned
@@ -184,17 +181,16 @@ fun <T : Any> castDate(
  * If the value is a String, the enum constant that matches the string will be returned, the case
  * will be ignored
  */
-inline fun <reified T : Enum<T>> castEnum(value: Any?): T {
+inline fun <reified T : Enum<T>> parseEnum(value: Any?): T {
     val enumClass = T::class.java
     val enumValues = enumClass.enumConstants
 
     return if (value is Number) {
-        val ordinal = cast<Int>(value)
+        val ordinal = parse<Int>(value)
 
         if (ordinal < enumValues.size) {
             enumValues[ordinal]
-        }
-        else {
+        } else {
             throw JsonException("Index out of bound for enum ${enumClass.simpleName}: Size: ${enumValues.size}, Index: $ordinal")
         }
     } else {
@@ -238,5 +234,24 @@ fun stringify(value: Any?): String {
         is String -> "\"$value\""
 
         else -> value.toString()
+    }
+}
+
+/**
+ * Creates an instance of [Calendar] with the given [time],
+ * which must be expressed in milliseconds
+ */
+internal fun calendarOf(time: Long): Calendar {
+    return Calendar.getInstance().apply {
+        timeInMillis = time
+    }
+}
+
+/**
+ * Creates an instance of [Calendar] with the given [date]
+ */
+internal fun calendarOf(date: Date): Calendar {
+    return Calendar.getInstance().apply {
+        time = date
     }
 }

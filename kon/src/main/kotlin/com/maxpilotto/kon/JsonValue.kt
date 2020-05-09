@@ -43,9 +43,6 @@ import java.util.*
 class JsonValue : Json {
     /**
      * Content of this [JsonValue]
-     *
-     * This can be cast/parsed using the various available methods (generally starting with 'as'),
-     * alternatively it can be checked using the `is` operator and than cast using `as`
      */
     var content: Any?
         private set
@@ -113,91 +110,90 @@ class JsonValue : Json {
      * then the [toString] method will be called
      */
     fun asString(): String {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a generic Number
      */
     fun asNumber(): Number {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a JsonObject
      */
     fun asJsonObject(): JsonObject {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a JsonArray
      */
     fun asJsonArray(): JsonArray {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as an Int
      */
     fun asInt(): Int {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as an Long
      */
     fun asLong(): Long {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a Boolean
      */
     fun asBoolean(): Boolean {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a Double
      */
     fun asDouble(): Double {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a Float
      */
     fun asFloat(): Float {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a Byte
      */
     fun asByte(): Byte {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a Short
      */
     fun asShort(): Short {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a Char
      */
     fun asChar(): Char {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a [Date]
      */
     fun asDate(): Date {
-        return cast(content)
     }
 
     /**
@@ -206,7 +202,7 @@ class JsonValue : Json {
      * If the value is not a String, this will just return the [Date] instance if possible
      */
     fun asDate(dateFormat: DateFormat): Date {
-        return castDate(content, dateFormat)
+        return parseDate(content, dateFormat)
     }
 
     /**
@@ -219,14 +215,14 @@ class JsonValue : Json {
         format: String,
         locale: Locale = Locale.getDefault()
     ): Date {
-        return castDate(content, format, locale)
+        return parseDate(content, format, locale)
     }
 
     /**
      * Returns this value as a [Calendar]
      */
     fun asCalendar(): Calendar {
-        return cast(content)
+        return parse(content)
     }
 
     /**
@@ -235,7 +231,7 @@ class JsonValue : Json {
      * If the value is not a String, this will just return the [Calendar] instance if possible
      */
     fun asCalendar(dateFormat: DateFormat): Calendar {
-        return castDate(content, dateFormat)
+        return parseDate(content, dateFormat)
     }
 
     /**
@@ -248,28 +244,28 @@ class JsonValue : Json {
         format: String,
         locale: Locale = Locale.getDefault()
     ): Calendar {
-        return castDate(content, format, locale)
+        return parseDate(content, format, locale)
     }
 
     /**
      * Returns this value as an [IntRange]
      */
     fun asRange(): IntRange {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as a [BigDecimal]
      */
     fun asBigDecimal(): BigDecimal {
-        return cast(content)
+        return parse(content)
     }
 
     /**
      * Returns this value as an [URL]
      */
     fun asURL(): URL {
-        return cast(content)
+        return parse(content)
     }
 
     /**
@@ -289,7 +285,7 @@ class JsonValue : Json {
      * read and used to parse the enum
      */
     inline fun <reified T : Enum<T>> asEnum(): T {
-        return castEnum(content)
+        return parseEnum(content)
     }
 
     /**
