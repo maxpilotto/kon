@@ -20,10 +20,6 @@ inline fun <reified T : Any> parse(value: Any?): T {
  * Parses the given [value] into the specified [type]
  */
 fun <T : Any> parse(value: Any?, type: KClass<T>): T {
-    //TODO Check for a null type
-    // value == null -> T?
-    // value == "null" -> T?
-
     return when (type) {
         String::class -> when (value) {
             is String -> value
@@ -71,19 +67,24 @@ fun <T : Any> parse(value: Any?, type: KClass<T>): T {
         Boolean::class -> when (value) {
             is Boolean -> value
             is Number -> value.toInt() != 0
-            is String -> value.equals("true", true)
+            is String -> when {
+                value.equals("true",true) -> true
+                value.equals("false",true) -> false
 
-            else -> throw JsonException("Value cannot be parsed into Boolean")
+                else -> parse<Int>(value) > 0
+            }
+
+            else -> throw JsonException("$value cannot be parsed into Boolean")
         }
         Number::class -> when (value) {
             is Number -> value
             is String -> try {
                 BigDecimal(value)
             } catch (e: Exception) {
-                throw JsonException("Cannot parse value as Number: ${e.message}")
+                throw JsonException("Cannot parse $value into Number: ${e.message}")
             }
 
-            else -> throw JsonException("Value cannot be parsed into Number")
+            else -> throw JsonException("$value cannot be parsed into Number")
         }
 
         Date::class -> parseDate(value)
@@ -103,20 +104,20 @@ fun <T : Any> parse(value: Any?, type: KClass<T>): T {
                 IntRange(0, value.toInt())
             }
 
-            else -> throw JsonException("Value cannot be parsed into IntRange")
+            else -> throw JsonException("$value cannot be parsed into IntRange")
         }
         BigDecimal::class -> when (value) {
             is BigDecimal -> value
             is Number -> BigDecimal(value.toDouble())
             is String -> BigDecimal(value)
 
-            else -> throw JsonException("Value cannot be parsed into BigDecimal")
+            else -> throw JsonException("$value cannot be parsed into BigDecimal")
         }
         URL::class -> when (value) {
             is URL -> value
             is String -> URL(value)
 
-            else -> throw JsonException("Value cannot be parsed into URL")
+            else -> throw JsonException("$value cannot be parsed into URL")
         }
 
         else -> value
@@ -166,7 +167,7 @@ fun <T : Any> parseDate(
                 throw JsonException(e.message)
             }
 
-            else -> throw JsonException("Value cannot be parsed as Date/Calendar")
+            else -> throw JsonException("Value cannot be parsed into Date/Calendar")
         }
         Calendar::class -> when (value) {
             is Calendar -> value
@@ -174,7 +175,7 @@ fun <T : Any> parseDate(
             else -> calendarOf(parseDate<Date>(value, dateFormat))
         }
 
-        else -> throw JsonException("Value cannot be parsed as Date/Calendar")
+        else -> throw JsonException("Value cannot be parsed into Date/Calendar")
 
     } as T
 }
@@ -216,7 +217,7 @@ inline fun <reified T : Enum<T>> parseEnum(value: Any?): T {
  */
 fun localeFor(tag: String): Locale {
     require(tag.matches(Regex("[a-zA-z]{2,}[,_-]?[a-zA-z]*"))) {
-        Exception("Locale doesn't match the supported formats")
+        JsonException("Locale doesn't match the supported formats")
     }
 
     return Locale.forLanguageTag(

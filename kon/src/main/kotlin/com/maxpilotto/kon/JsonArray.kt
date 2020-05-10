@@ -245,7 +245,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun add(
         index: Int,
-        date: Any,  //FIXME Date should be nullable
+        date: Any,
         format: String,
         locale: Locale = Locale.getDefault()
     ) {
