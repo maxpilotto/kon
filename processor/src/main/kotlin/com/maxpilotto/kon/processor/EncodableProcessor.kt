@@ -188,9 +188,9 @@ class EncodableProcessor : KonProcessor() {
                 // the toString() method will be used
                 else -> {
                     val transform = if (hasAnnotation(type, JsonEncodable::class)) {
-                        """${getEncoder(prop)}.encode($getter)"""   //TODO Use the invoke
+                        "${getEncoder(prop)}($getter)"
                     } else {
-                        """transform($getter) ?: $getter"""
+                        "transform($getter) ?: $getter"
                     }
 
                     method.addStatement("""json.set("$actualName",$transform)""")
@@ -251,9 +251,9 @@ class EncodableProcessor : KonProcessor() {
 
             else -> {
                 if (hasAnnotation(component, JsonEncodable::class)) {
-                    code.add("""${getEncoder(component)}.encode(it).toString()""")
+                    code.add("${getEncoder(component)}(it).toString()")
                 } else {
-                    code.add("""(transform(it) ?: it).toString()""")
+                    code.add("(transform(it) ?: it).toString()")
                 }
             }
         }
@@ -385,7 +385,7 @@ class EncodableProcessor : KonProcessor() {
                 // Unsupported type
                 else -> {
                     if (hasAnnotation(prop, JsonEncodable::class)) {
-                        parameters.add("""${getDecoder(prop)}.decode(json.getJsonObject("$actualName"))""")
+                        parameters.add("""${getDecoder(prop)}(json.getJsonObject("$actualName"))""")
                     } else {
                         if (hasAnnotation(prop, Nullable::class)) {
                             parameters.add("""transform(json.getJsonObject("$actualName")) as ${type.simpleName}? ?: null""")
@@ -476,7 +476,7 @@ class EncodableProcessor : KonProcessor() {
             // Unsupported type
             else -> {
                 if (hasAnnotation(component, JsonEncodable::class)) {
-                    code.add("${getDecoder(component)}.decode(it as JsonObject)")
+                    code.add("${getDecoder(component)}(it as JsonObject)")
                 } else {
                     if (hasAnnotation(component, Nullable::class)) {
                         code.add("transform(parse<JsonObject>(it)) as ${component.simpleName}? ?: null")
