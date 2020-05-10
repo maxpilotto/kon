@@ -194,6 +194,7 @@ class JsonValue : Json {
      * Returns this value as a [Date]
      */
     fun asDate(): Date {
+        return parse(content)
     }
 
     /**

@@ -20,6 +20,10 @@ inline fun <reified T : Any> parse(value: Any?): T {
  * Parses the given [value] into the specified [type]
  */
 fun <T : Any> parse(value: Any?, type: KClass<T>): T {
+    //TODO Check for a null type
+    // value == null -> T?
+    // value == "null" -> T?
+
     return when (type) {
         String::class -> when (value) {
             is String -> value
@@ -134,6 +138,7 @@ inline fun <reified T : Any> parseDate(
  * Parses the given [value] into the specified a [Date] or [Calendar], using the
  * [format] and [locale] to parse the value if needed
  */
+inline fun <reified T : Any> parseDate(
     value: Any?,
     format: String,
     locale: Locale = Locale.getDefault()
@@ -164,10 +169,12 @@ fun <T : Any> parseDate(
             else -> throw JsonException("Value cannot be parsed as Date/Calendar")
         }
         Calendar::class -> when (value) {
+            is Calendar -> value
 
             else -> calendarOf(parseDate<Date>(value, dateFormat))
         }
 
+        else -> throw JsonException("Value cannot be parsed as Date/Calendar")
 
     } as T
 }

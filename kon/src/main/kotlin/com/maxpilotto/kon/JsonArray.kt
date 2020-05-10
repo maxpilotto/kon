@@ -20,6 +20,7 @@ import com.maxpilotto.kon.protocols.Json
 import java.math.BigDecimal
 import java.net.URL
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -142,7 +143,7 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     override fun add(index: Int, element: Any?) {
-        return list.add(index, wrap(element))
+        list.add(index, wrap(element))
     }
 
     override fun addAll(index: Int, elements: Collection<Any?>): Boolean {
@@ -208,6 +209,47 @@ class JsonArray : Json, MutableList<Any?> {
         return also {
             it.removeAt(lastIndex)  //TODO Should I return a clone and leave the original unaltered?
         }
+    }
+
+    /**
+     * Adds the given [date] to the end of this JsonArray, using the [dateFormat] to format it
+     *
+     * The [date] must be a [Date], [Calendar], String or Number
+     */
+    fun add(date: Any, dateFormat: DateFormat): Boolean {
+        return list.add(dateFormat.format(parseDate(date, dateFormat)))
+    }
+
+    /**
+     * Adds the given [date] at the given [index], using the [dateFormat] to format it
+     *
+     * The [date] must be a [Date], [Calendar] or String
+     */
+    fun add(index: Int, date: Any, dateFormat: DateFormat) {
+        list.add(index, dateFormat.format(parseDate(date, dateFormat)))
+    }
+
+    /**
+     * Adds the given [date] to the end of the array, using the [format] and the [locale] to format it
+     */
+    fun add(
+        date: Any,
+        format: String,
+        locale: Locale = Locale.getDefault()
+    ): Boolean {
+        return add(date, SimpleDateFormat(format, locale))
+    }
+
+    /**
+     * Adds the given [date] at the given [index], using the [format] and the [locale] to format it
+     */
+    fun add(
+        index: Int,
+        date: Any,  //FIXME Date should be nullable
+        format: String,
+        locale: Locale = Locale.getDefault()
+    ) {
+        add(index, date, SimpleDateFormat(format, locale))
     }
 
     /**
@@ -357,7 +399,7 @@ class JsonArray : Json, MutableList<Any?> {
         locale: Locale = Locale.getDefault()
     ): List<Date> {
         return List(size) {
-            castDate<Date>(list[it], format, locale)
+            parseDate<Date>(list[it], format, locale)
         }
     }
 
@@ -387,7 +429,7 @@ class JsonArray : Json, MutableList<Any?> {
         locale: Locale = Locale.getDefault()
     ): List<Calendar> {
         return List(size) {
-            castDate<Calendar>(list[it], format, locale)
+            parseDate<Calendar>(list[it], format, locale)
         }
     }
 

@@ -21,6 +21,8 @@ import com.maxpilotto.kon.JsonValue
 import com.maxpilotto.kon.util.JsonException
 import java.math.BigDecimal
 import java.net.URL
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -64,6 +66,114 @@ abstract class Json {
     }
 
     /**
+     * Sets the given [date] for the given [key], using the [dateFormat] to
+     * format it
+     */
+    operator fun set(key: String, dateFormat: DateFormat, date: Date) {
+        set(key, dateFormat.format(date))
+    }
+
+    /**
+     * Sets the given [calendar] for the given [key], using the [dateFormat] to
+     * format it
+     */
+    operator fun set(key: String, dateFormat: DateFormat, calendar: Calendar) {
+        set(key, dateFormat, calendar.time)
+    }
+
+    /**
+     * Sets the given [date] for the given [key], using the [format] and [locale] to
+     * format it
+     */
+    operator fun set(key: String, format: String, locale: Locale, date: Date) {
+        set(key, SimpleDateFormat(format, locale), date)
+    }
+
+    /**
+     * Sets the given [calendar] for the given [key], using the [format] and [locale] to
+     * format it
+     */
+    operator fun set(key: String, format: String, locale: Locale, calendar: Calendar) {
+        set(key, format, locale, calendar.time)
+    }
+
+    /**
+     * Sets the given [date] for the given [key], using the [format] and the default
+     * Locale to format it
+     */
+    operator fun set(key: String, format: String, date: Date) {
+        set(key, format, Locale.getDefault(), date)
+    }
+
+    /**
+     * Sets the given [calendar] for the given [key], using the [format] and the default
+     * Locale to format it
+     */
+    operator fun set(key: String, format: String, calendar: Calendar) {
+        set(key, format, Locale.getDefault(), calendar.time)
+    }
+
+    /**
+     * Sets the given [date] at the given [index], using the [dateFormat]
+     * to format it and returns the item previously at the given [index]
+     *
+     * The returned item will never be of type [Date] or [Calendar]
+     */
+    operator fun set(index: Int, dateFormat: DateFormat, date: Date): Any? {
+        return set(index, dateFormat.format(date))
+    }
+
+    /**
+     * Sets the given [calendar] at the given [index], using the [dateFormat]
+     * to format it and returns the item previously at the given [index]
+     *
+     * The returned item will never be of type [Date] or [Calendar]
+     */
+    operator fun set(index: Int, dateFormat: DateFormat, calendar: Calendar): Any? {
+        return set(index, dateFormat, calendar.time)
+    }
+
+    /**
+     * Sets the given [date] at the given [index], using the [format] and the [locale]
+     * to format it and returns the item previously at the given [index]
+     *
+     * The returned item will never be of type [Date] or [Calendar]
+     */
+    operator fun set(index: Int, format: String, locale: Locale, date: Date): Any? {
+        return set(index, SimpleDateFormat(format, locale), date)
+    }
+
+    /**
+     * Sets the given [calendar] at the given [index], using the [format] and the [locale]
+     * to format it and returns the item previously at the given [index]
+     *
+     * The returned item will never be of type [Date] or [Calendar]
+     */
+    operator fun set(index: Int, format: String, locale: Locale, calendar: Calendar): Any? {
+        return set(index, format, locale, calendar.time)
+    }
+
+    /**
+     * Sets the given [date] at the given [index], using the [format] and the default
+     * locale to format it and returns the item previously at the given [index]
+     *
+     * The returned item will never be of type [Date] or [Calendar]
+     */
+    operator fun set(index: Int, format: String, date: Date): Any? {
+        return set(index, format, Locale.getDefault(), date)
+    }
+
+    /**
+     * Sets the given [calendar] at the given [index], using the [format] and the default
+     * locale to format it and returns the item previously at the given [index]
+     *
+     * The returned item will never be of type [Date] or [Calendar]
+     */
+    operator fun set(index: Int, format: String, calendar: Calendar): Any? {
+        return set(index, format, Locale.getDefault(), calendar.time)
+    }
+
+    /**
      * Wraps or converts the given [value] to a type supported by the [JsonObject] and [JsonArray]
      *
      * This will unwrap the [value] if it is inside a [JsonValue]
@@ -95,10 +205,11 @@ abstract class Json {
             is Number,
             is String -> value
 
+            is Calendar -> value.timeInMillis
+            is Date -> value.time
+
             is Char,
             is Boolean,
-            is Calendar,    //TODO Use reflection to get the JsonDate
-            is Date,
             is IntRange,
             is URL,
             is Enum<*> -> value.toString()
@@ -111,7 +222,6 @@ abstract class Json {
      * Returns this entity as a pretty printable output
      */
     //TODO Add indent option
-    //TODO Add dateFormat, so all dates can print accordingly
     //TODO Add params
     // showType, shows the type of the property
     // useBraces, shows {properties} instead of JsonObject(properties), enabled by default
