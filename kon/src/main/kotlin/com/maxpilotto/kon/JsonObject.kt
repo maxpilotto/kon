@@ -53,7 +53,7 @@ import java.util.*
  *
  * ```
  */
-class JsonObject : Json {   //TODO Add value observer
+class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {   //TODO Add value observer
     private var map: MutableMap<String, Any?>
 
     /**
@@ -69,17 +69,13 @@ class JsonObject : Json {   //TODO Add value observer
         get() = map.keys
 
     /**
-     * Returns a MutableCollection of all values in this map.
-     *
-     * Note that this collection may contain duplicate values
+     * Returns a MutableCollection of all values in this map
      */
     val values: MutableCollection<Any?>
         get() = map.values
 
     /**
      * Returns the number of key/value pairs in this object
-     *
-     * Note that this is the number of pairs in the root of this object
      */
     val size: Int
         get() = map.size
@@ -132,6 +128,35 @@ class JsonObject : Json {   //TODO Add value observer
     override fun set(key: String, element: Any?) {
         map[key] = wrap(element)
     }
+
+    override fun iterator(): MutableIterator<MutableMap.MutableEntry<String, Any?>> {
+        return map.iterator()
+    }
+
+    /**
+     * Returns the number of key/value pairs in this object
+     *
+     * @param recursiveLookup If true, the size of all children that are JsonObject will be added
+     */
+    fun size(recursiveLookup: Boolean = false): Int {
+        return if (recursiveLookup) {
+            var s = size
+
+            for (e in map) {
+                if (e.value is JsonObject) {
+                    s += (e.value as JsonObject).size(true)
+                }
+            }
+
+            s
+        }else {
+            size
+        }
+    }
+
+
+
+
 
     /**
      * Returns an option wrapped value for the given [key] or [default] if

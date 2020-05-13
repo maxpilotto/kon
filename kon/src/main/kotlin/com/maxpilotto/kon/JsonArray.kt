@@ -34,28 +34,12 @@ import java.util.*
  *
  * Elements can be added using the [add] and [addAll] methods or the [plusAssign] operator
  *
- * The methods for adding a single value can also work with a [JsonValue], this will be
- * unwrapped and added to the array
- *
  * ## Removing elements
  *
  * Elements can be removed using the [remove], [removeAt], [removeAll] methods or the [minusAssign] operator
- *
- * The [remove] and [minusAssign] methods that takes a single value will do
- * any unwrapping of the value if necessary
- *
- * ## Get/Set operators
- *
- * Both the [get] and [set] will operate with [JsonValue], in the last case you don't necessary need
- * to pass it a [JsonValue], the value will be unwrapped anyway
- *
- * ## Other method that can work with [JsonValue]
- *
- * + [contains]
- * + [indexOf]
  */
 class JsonArray : Json, MutableList<Any?> {
-    private val list: MutableList<Any?>
+    private val list: MutableList<Any?> = mutableListOf()
 
     /**
      * Number of elements in this [JsonArray]
@@ -89,8 +73,6 @@ class JsonArray : Json, MutableList<Any?> {
      * This won't work unwrap the values if they're [JsonValue] instances
      */
     constructor(collection: Collection<*>) {
-        this.list = mutableListOf()
-
         for (e in collection) {
             this.list.add(wrap(e))
         }
@@ -231,6 +213,8 @@ class JsonArray : Json, MutableList<Any?> {
 
     /**
      * Adds the given [date] to the end of the array, using the [format] and the [locale] to format it
+     *
+     * The [date] must be a [Date], [Calendar] or String
      */
     fun add(
         date: Any,
@@ -242,6 +226,8 @@ class JsonArray : Json, MutableList<Any?> {
 
     /**
      * Adds the given [date] at the given [index], using the [format] and the [locale] to format it
+     *
+     * The [date] must be a [Date], [Calendar] or String
      */
     fun add(
         index: Int,
@@ -461,6 +447,17 @@ class JsonArray : Json, MutableList<Any?> {
     }
 
     /**
+     * Returns this [JsonArray] as a List of Enum of type [T]
+     */
+    inline fun <reified T : Enum<T>> toEnumList(): List<T> {    //TODO Improve support for Java with @JavaOverloads
+        val list = toList()
+
+        return List(size) {
+            parseEnum<T>(it)
+        }
+    }
+
+    /**
      * Returns this [JsonArray] as a List of [T], which values
      * are parsed using the [transform] block
      */
@@ -469,17 +466,6 @@ class JsonArray : Json, MutableList<Any?> {
 
         return List(size) {
             transform(list[it])
-        }
-    }
-
-    /**
-     * Returns this [JsonArray] as a List of Enum of type [T]
-     */
-    inline fun <reified T : Enum<T>> toEnumList(): List<T> {    //TODO Improve support for Java with @JavaOverloads
-        val list = toList()
-
-        return List(size) {
-            parseEnum<T>(it)
         }
     }
 
