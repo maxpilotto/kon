@@ -9,6 +9,7 @@ import com.maxpilotto.kon.extensions.getFormat
 import com.maxpilotto.kon.extensions.getLocale
 import com.maxpilotto.kon.processor.extensions.simpleName
 import com.squareup.kotlinpoet.*
+import java.io.File
 import java.math.BigDecimal
 import java.net.URL
 import java.text.SimpleDateFormat
@@ -48,6 +49,7 @@ class EncodableProcessor : KonProcessor() {
         when (kClass) {
             JsonEncodable::class -> {
                 for (element in elements) {
+                    val generatedDir = File(processingEnv.options["kapt.kotlin.generated"])
                     val packageName = processingEnv.elementUtils.getPackageOf(element).toString()
                     val fileName = element.simpleName.toString()
                     val privateConstructor = FunSpec.constructorBuilder()

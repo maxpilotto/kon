@@ -48,9 +48,6 @@ typealias PropertiesBlock = (
  * Base Processor class used to process Kon's annotations
  */
 abstract class KonProcessor : AbstractProcessor() {
-    protected val generatedDir: File
-        get() = File(processingEnv.options["kapt.kotlin.generated"])
-
     protected abstract fun process(kClass: KClass<*>, elements: Set<Element>): Boolean
 
     override fun process(p0: MutableSet<out TypeElement>, p1: RoundEnvironment): Boolean {
