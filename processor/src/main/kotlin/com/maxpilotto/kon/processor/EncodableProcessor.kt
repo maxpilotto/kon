@@ -49,7 +49,6 @@ class EncodableProcessor : KonProcessor() {
         when (kClass) {
             JsonEncodable::class -> {
                 for (element in elements) {
-                    val generatedDir = File(processingEnv.options["kapt.kotlin.generated"])
                     val packageName = processingEnv.elementUtils.getPackageOf(element).toString()
                     val fileName = element.simpleName.toString()
                     val privateConstructor = FunSpec.constructorBuilder()
@@ -86,7 +85,7 @@ class EncodableProcessor : KonProcessor() {
                         .indent("\t")
                         .build()
 
-                    file.writeTo(generatedDir)
+                    file.writeTo(processingEnv.filer)
                 }
 
                 return true

@@ -305,9 +305,5 @@ abstract class KonProcessor : AbstractProcessor() {
     companion object {
         internal val BASE_PACKAGE = "com.maxpilotto.kon"
         internal val OPTIONAL_ANY = Any::class.asTypeName().copy(true)
-
-        fun out(any: Any?) {
-            File("jsonencodable_processor_log").appendText(any.toString() + "\n")
-        }
     }
 }
