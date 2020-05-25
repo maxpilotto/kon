@@ -63,13 +63,13 @@ class EncodableProcessor : KonProcessor() {
                     val file = FileSpec.builder(packageName, fileName)
                         .addImport("$BASE_PACKAGE.extensions", "toJsonValue")
                         .addImport("$BASE_PACKAGE.util", "JsonException")
-                        .addImport(BASE_PACKAGE, "stringify")
-                        .addImport(BASE_PACKAGE, "localeFor")
+                        .addImport("$BASE_PACKAGE.util", "stringify")
+                        .addImport("$BASE_PACKAGE.util", "localeFor")
+                        .addImport("$BASE_PACKAGE.util", "parse")
+                        .addImport("$BASE_PACKAGE.util", "parseDate")
+                        .addImport("$BASE_PACKAGE.util", "parseEnum")
                         .addImport(BASE_PACKAGE, "JsonArray")
                         .addImport(BASE_PACKAGE, "JsonObject")  //TODO Import these only if needed
-                        .addImport(BASE_PACKAGE, "parse")
-                        .addImport(BASE_PACKAGE, "parseDate")
-                        .addImport(BASE_PACKAGE, "parseEnum")
                         .addType(
                             TypeSpec.classBuilder("${fileName}Encoder")
                                 .primaryConstructor(privateConstructor)

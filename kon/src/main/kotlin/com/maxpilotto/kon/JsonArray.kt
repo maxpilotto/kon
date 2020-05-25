@@ -17,6 +17,10 @@ package com.maxpilotto.kon
 
 import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
+import com.maxpilotto.kon.util.parse
+import com.maxpilotto.kon.util.parseDate
+import com.maxpilotto.kon.util.parseEnum
+import com.maxpilotto.kon.util.stringify
 import java.math.BigDecimal
 import java.net.URL
 import java.text.DateFormat
@@ -364,7 +368,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toDateList(): List<Date> {
         return List(size) {
-            parse<Date>(list[it])
+            parseDate<Date>(list[it])
         }
     }
 
@@ -394,7 +398,7 @@ class JsonArray : Json, MutableList<Any?> {
      */
     fun toCalendarList(): List<Calendar> {
         return List(size) {
-            parse<Calendar>(list[it])
+            parseDate<Calendar>(list[it])
         }
     }
 
