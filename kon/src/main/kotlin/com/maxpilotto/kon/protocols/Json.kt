@@ -56,7 +56,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [element] at the given [index] and
+     * Sets the given [element] associated with the given [index] and
      * returns the item previously at the given [index]
      *
      * If the [element] is a [JsonValue], the value will be unwrapped
@@ -66,15 +66,15 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [date] for the given [key], using the [dateFormat] to
+     * Sets the given [date] associated with the given [key], using the [dateFormat] to
      * format it
      */
-    operator fun set(key: String, dateFormat: DateFormat, date: Date) {
+    operator fun set(key: String, dateFormat: DateFormat, date: Date) { //TODO Put the operators in different classes, like JsonObjectOperators and JsonArrayOperators
         set(key, dateFormat.format(date))
     }
 
     /**
-     * Sets the given [calendar] for the given [key], using the [dateFormat] to
+     * Sets the given [calendar] associated with the given [key], using the [dateFormat] to
      * format it
      */
     operator fun set(key: String, dateFormat: DateFormat, calendar: Calendar) {
@@ -82,7 +82,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [date] for the given [key], using the [format] and [locale] to
+     * Sets the given [date] associated with the given [key], using the [format] and [locale] to
      * format it
      */
     operator fun set(key: String, format: String, locale: Locale, date: Date) {
@@ -90,7 +90,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [calendar] for the given [key], using the [format] and [locale] to
+     * Sets the given [calendar] associated with the given [key], using the [format] and [locale] to
      * format it
      */
     operator fun set(key: String, format: String, locale: Locale, calendar: Calendar) {
@@ -98,7 +98,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [date] for the given [key], using the [format] and the default
+     * Sets the given [date] associated with the given [key], using the [format] and the default
      * Locale to format it
      */
     operator fun set(key: String, format: String, date: Date) {
@@ -106,7 +106,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [calendar] for the given [key], using the [format] and the default
+     * Sets the given [calendar] associated with the given [key], using the [format] and the default
      * Locale to format it
      */
     operator fun set(key: String, format: String, calendar: Calendar) {
@@ -114,7 +114,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [date] at the given [index], using the [dateFormat]
+     * Sets the given [date] associated with the given [index], using the [dateFormat]
      * to format it and returns the item previously at the given [index]
      *
      * The returned item will never be of type [Date] or [Calendar]
@@ -124,7 +124,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [calendar] at the given [index], using the [dateFormat]
+     * Sets the given [calendar] associated with the given [index], using the [dateFormat]
      * to format it and returns the item previously at the given [index]
      *
      * The returned item will never be of type [Date] or [Calendar]
@@ -134,7 +134,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [date] at the given [index], using the [format] and the [locale]
+     * Sets the given [date] associated with the given [index], using the [format] and the [locale]
      * to format it and returns the item previously at the given [index]
      *
      * The returned item will never be of type [Date] or [Calendar]
@@ -144,7 +144,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [calendar] at the given [index], using the [format] and the [locale]
+     * Sets the given [calendar] associated with the given [index], using the [format] and the [locale]
      * to format it and returns the item previously at the given [index]
      *
      * The returned item will never be of type [Date] or [Calendar]
@@ -154,7 +154,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [date] at the given [index], using the [format] and the default
+     * Sets the given [date] associated with the given [index], using the [format] and the default
      * locale to format it and returns the item previously at the given [index]
      *
      * The returned item will never be of type [Date] or [Calendar]
@@ -164,7 +164,7 @@ abstract class Json {
     }
 
     /**
-     * Sets the given [calendar] at the given [index], using the [format] and the default
+     * Sets the given [calendar] associated with the given [index], using the [format] and the default
      * locale to format it and returns the item previously at the given [index]
      *
      * The returned item will never be of type [Date] or [Calendar]

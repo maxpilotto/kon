@@ -17,6 +17,10 @@ package com.maxpilotto.kon
 
 import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
+import com.maxpilotto.kon.util.parse
+import com.maxpilotto.kon.util.parseDate
+import com.maxpilotto.kon.util.parseEnum
+import com.maxpilotto.kon.util.stringify
 import java.math.BigDecimal
 import java.net.URL
 import java.text.DateFormat
@@ -27,9 +31,9 @@ import java.util.*
  *
  * Wrapper for any value stored in a JsonObject or JsonArray,
  * this is used by the [JsonObject] and [JsonArray] get/set operators
- * so accessing through your json is easier
+ * so accessing through your json objects/arrays is easier
  *
- * This will allow you to do things like this
+ * E.g.
  *
  * ```kotlin
  *
@@ -124,7 +128,7 @@ class JsonValue : Json {
      * Returns this value as a JsonObject
      */
     fun asJsonObject(): JsonObject {
-        return parse(content)
+        return parse(content)   //FIXME The content could be null
     }
 
     /**
@@ -194,23 +198,19 @@ class JsonValue : Json {
      * Returns this value as a [Date]
      */
     fun asDate(): Date {
-        return parse(content)
+        return parseDate(content)
     }
 
     /**
-     * Returns this value as a [Date] using the given [dateFormat] to parse the input
-     *
-     * If the value is not a String, this will just return the [Date] instance if possible
+     * Returns this value as a [Date] using the [dateFormat] to parse the input
      */
     fun asDate(dateFormat: DateFormat): Date {
         return parseDate(content, dateFormat)
     }
 
     /**
-     * Returns this value as a [Date] using the given [format] and [locale] to input
+     * Returns this value as a [Date] using the [format] and [locale] to parse
      * the input
-     *
-     * If the value is not a String, this will just return the [Date] instance if possible
      */
     fun asDate(
         format: String,
@@ -223,23 +223,19 @@ class JsonValue : Json {
      * Returns this value as a [Calendar]
      */
     fun asCalendar(): Calendar {
-        return parse(content)
+        return parseDate(content)
     }
 
     /**
-     * Returns this value as a [Calendar] using the given [dateFormat] to parse the input
-     *
-     * If the value is not a String, this will just return the [Calendar] instance if possible
+     * Returns this value as a [Calendar] using the [dateFormat] to parse the input
      */
     fun asCalendar(dateFormat: DateFormat): Calendar {
         return parseDate(content, dateFormat)
     }
 
     /**
-     * Returns this value as a [Calendar] using the given [format] and [locale] to parse
+     * Returns this value as a [Calendar] using the [format] and [locale] to parse
      * the input
-     *
-     * If the value is not a String, this will just return the [Calendar] instance if possible
      */
     fun asCalendar(
         format: String,
@@ -281,9 +277,6 @@ class JsonValue : Json {
 
     /**
      * Returns this value as an Enum of type [T]
-     *
-     * The [transform] block is used to decided how the Enum value should be
-     * read and used to parse the enum
      */
     inline fun <reified T : Enum<T>> asEnum(): T {
         return parseEnum(content)
@@ -443,18 +436,18 @@ class JsonValue : Json {
     }
 
     /**
+     * Returns this value as a List of Enum of type [T]
+     */
+    inline fun <reified T : Enum<T>> asEnumList(): List<T> {
+        return asJsonArray().toEnumList()
+    }
+
+    /**
      * Returns this value as an Array of [T], using the [transform] block
      * to parse the items
      */
     inline fun <T> asList(transform: (Any?) -> T): List<T> {
         return asJsonArray().toList(transform)
-    }
-
-    /**
-     * Returns this value as a List of Enum of type [T]
-     */
-    inline fun <reified T : Enum<T>> asEnumList(): List<T> {
-        return asJsonArray().toEnumList()
     }
 
     /**
