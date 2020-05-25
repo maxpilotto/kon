@@ -17,7 +17,8 @@ package com.maxpilotto.kon
 
 import com.maxpilotto.kon.extensions.toJsonValue
 import com.maxpilotto.kon.protocols.Json
-import com.maxpilotto.kon.util.JsonException
+import com.maxpilotto.kon.util.*
+import com.maxpilotto.kon.util.isNull
 import java.math.BigDecimal
 import java.net.URL
 import java.text.DateFormat
@@ -53,7 +54,7 @@ import java.util.*
  *
  * ```
  */
-class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {   //TODO Add value observer
+class JsonObject : Json, MutableIterable<MutableMap.MutableEntry<String, Any?>> {   //TODO Add value observer
     private var map: MutableMap<String, Any?>
 
     /**
@@ -149,17 +150,13 @@ class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {
             }
 
             s
-        }else {
+        } else {
             size
         }
     }
 
-
-
-
-
     /**
-     * Returns an option wrapped value for the given [key] or [default] if
+     * Returns an optional wrapped value associated with the given [key] or [default] if
      * the value is null or the [key] doesn't exist
      */
     fun opt(key: String, default: Any?): JsonValue {
@@ -167,7 +164,7 @@ class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {
     }
 
     /**
-     * Returns the value for the given [key]
+     * Returns the value associated with the given [key]
      *
      * @throws JsonException If the [key] doesn't exist
      */
@@ -176,22 +173,13 @@ class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {
     }
 
     /**
-     * Returns the optional value for the given [key] or [default] if the value
+     * Returns the optional value associated with the given [key] or [default] if the value
      * is null or if the [key] doesn't exist
-     *
-     * By default the [default] value is null
      */
-    fun optValue(
-        key: String,
-        default: Any? = null
-    ): Any? {
+    fun optValue(key: String, default: Any? = null): Any? {
         val value = map[key]
 
-        return if (value == null || value == "null") {
-            default
-        } else {
-            value
-        }
+        return if (isNull(value)) default else value
     }
 
     /**
@@ -210,8 +198,6 @@ class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {
 
     /**
      * Removes the specified [key] and its corresponding value from this object
-     *
-     * @throws JsonException if the [key] was not found
      */
     fun remove(key: String): Any? {
         return map.remove(key) ?: throw JsonException("Key '$key' was not found")
@@ -226,7 +212,7 @@ class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {
      * @throws JsonException If any of the key is not a String or an Int
      * @throws JsonException If the second-last value is not a [JsonObject] or [JsonArray]
      */
-    fun remove(vararg path: Any) {
+    fun remove(vararg path: Any) {  //TODO Create a JsonPath object
         val last = path.last()
         var current = toJsonValue()
 
@@ -234,7 +220,7 @@ class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {
             val key = path[i]
 
             current = when (key) {
-                is String -> current[key]
+                is String -> current[key]   //TODO Use the index to fetch a value at keys[index]
                 is Int -> current[key]
 
                 else -> throw JsonException("Key '$key' is not a String or an Int")
@@ -259,6 +245,15 @@ class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {
 
             else -> throw JsonException("The value for the key '$last' is neither a JsonObject nor a JsonArray")
         }
+    }
+
+    /**
+     * Returns whether or not the value associated with the given [key] is null
+     *
+     * This will return true if the [key] doesn't exist
+     */
+    fun isNull(key: String): Boolean {
+        return !has(key) || isNull(getValue(key))
     }
 
     /**
@@ -289,1133 +284,1131 @@ class JsonObject : Json,MutableIterable<MutableMap.MutableEntry<String, Any?>> {
         return toMap() as Map<K, V>
     }
 
+    //TODO .copy(paths...)
     //TODO .reduce(keys)
     //TODO .merge(json)
 
     /**
-     * Returns the String for the given [key]
+     * Returns the String associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getString(key: String): String {
-        return get(key).asString()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional String for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty String
+     * Returns an optional String associated the given [key] or an
+     * empty String if the value is null or the [key] doesn't exist
      */
-    fun optString(
-        key: String,
-        default: String? = ""
-    ): String? {
-        return opt(key, default).asString()
+    fun optString(key: String): String {
+        return parse(optValue(key, ""))
     }
 
     /**
-     * Returns the Number for the given [key]
+     * Returns an optional String associated the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optString(key: String, default: Any?): String? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the Number associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getNumber(key: String): Number {
-        return get(key).asNumber()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Number for the given [key] or [default]
+     * Returns an optional Number associated with the given [key] or 0
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is 0
      */
-    fun optNumber(  //TODO There should be an alternative that doesn't take the default and returns 0 or null
-        key: String,
-        default: Number? = 0
-    ): Number? {
-        return opt(key, default).asNumber()
+    fun optNumber(key: String): Number {
+        return parse(optValue(key, 0))
     }
 
     /**
-     * Returns the [JsonObject] for the given [key]
+     * Returns an optional Number associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optNumber(key: String, default: Any?): Number? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the [JsonObject] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getJsonObject(key: String): JsonObject {
-        return get(key).asJsonObject()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional [JsonObject] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is null
+     * Returns an optional [JsonObject] associated with the given [key] or an
+     * empty [JsonObject] if the value is null or the [key] doesn't exist
      */
-    fun optJsonObject(
-        key: String,
-        default: JsonObject? = null
-    ): JsonObject? {
-        return opt(key, default).asJsonObject()
+    fun optJsonObject(key: String): JsonObject {
+        return parse(optValue(key, JsonObject()))
     }
 
     /**
-     * Returns the [JsonArray] for the given [key]
+     * Returns an optional [JsonObject] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optJsonObject(key: String, default: Any?): JsonObject? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the [JsonArray] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getJsonArray(key: String): JsonArray {
-        return get(key).asJsonArray()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional [JsonArray] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is null
+     * Returns an optional [JsonArray] associated with the given [key] or an
+     * empty [JsonArray] if the value is null or the [key] doesn't exist
      */
-    fun optJsonArray(
-        key: String,
-        default: JsonArray? = null
-    ): JsonArray? {
-        return opt(key, default).asJsonArray()
+    fun optJsonArray(key: String): JsonArray {
+        return parse(optValue(key, JsonArray()))
     }
 
     /**
-     * Returns the Int value for the given [key]
+     * Returns an optional [JsonArray] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optJsonArray(key: String, default: Any?): JsonArray? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the Int value associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getInt(key: String): Int {
-        return get(key).asInt()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Int value for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is 0
+     * Returns an optional Int value associated with the given [key] or
+     * 0 if the value is null or the [key] doesn't exist
      */
-    fun optInt(
-        key: String,
-        default: Int? = 0
-    ): Int? {
-        return opt(key, default).asInt()
+    fun optInt(key: String): Int {
+        return parse(optValue(key, 0))
     }
 
     /**
-     * Returns the Long value for the given [key]
+     * Returns an optional Int value associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optInt(key: String, default: Any?): Int? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the Long value associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getLong(key: String): Long {
-        return get(key).asLong()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Long value for the given [key] or [default]
+     * Returns an optional Long value associated with the given [key] or 0
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is 0
      */
-    fun optLong(
-        key: String,
-        default: Long? = 0L
-    ): Long? {
-        return opt(key, default).asLong()
+    fun optLong(key: String): Long {
+        return parse(optValue(key, 0L))
     }
 
     /**
-     * Returns the Boolean value for the given [key]
+     * Returns an optional Long value associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optLong(key: String, default: Any?): Long? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the Boolean value associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getBoolean(key: String): Boolean {
-        return get(key).asBoolean()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Boolean value for the given [key] or [default]
+     * Returns an optional Boolean value associated with the given [key] or false
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is false
      */
-    fun optBoolean(
-        key: String,
-        default: Boolean? = false
-    ): Boolean? {
-        return opt(key, default).asBoolean()
+    fun optBoolean(key: String): Boolean {
+        return parse(optValue(key, false))
     }
 
     /**
-     * Returns the Double value for the given [key]
+     * Returns an optional Boolean value associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optBoolean(key: String, default: Any?): Boolean? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the Double value associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getDouble(key: String): Double {
-        return get(key).asDouble()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Double value for the given [key] or [default]
+     * Returns an optional Double value associated with the given [key] or 0.0
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optDouble(key: String): Double {
+        return parse(optValue(key, 0.0))
+    }
+
+    /**
+     * Returns an optional Double value associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      *
      * By default the [default] value is 0.0
      */
-    fun optDouble(
-        key: String,
-        default: Double? = 0.0
-    ): Double? {
-        return opt(key, default).asDouble()
+    fun optDouble(key: String, default: Any?): Double? {
+        return parseOptional(optValue(key, default))
     }
 
     /**
-     * Returns the Float value for the given [key]
+     * Returns the Float value associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getFloat(key: String): Float {
-        return get(key).asFloat()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Float value for the given [key] or [default]
+     * Returns an optional Float value associated with the given [key] or 0
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is 0.0
      */
-    fun optFloat(
-        key: String,
-        default: Float? = 0F
-    ): Float? {
-        return opt(key, default).asFloat()
+    fun optFloat(key: String): Float {
+        return parse(optValue(key, 0F))
     }
 
     /**
-     * Returns the Byte value for the given [key]
+     * Returns an optional Float value associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optFloat(key: String, default: Any?): Float? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the Byte value associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getByte(key: String): Byte {
-        return get(key).asByte()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Byte value for the given [key] or [default]
+     * Returns an optional Byte value associated with the given [key] or [Byte.MIN_VALUE]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is 0
      */
-    fun optByte(
-        key: String,
-        default: Byte? = 0
-    ): Byte? {
-        return opt(key, default).asByte()
+    fun optByte(key: String): Byte {
+        return parse(optValue(key, Byte.MIN_VALUE))
     }
 
     /**
-     * Returns the Short value for the given [key]
+     * Returns an optional Byte value associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optByte(key: String, default: Any?): Byte? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the Short value associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getShort(key: String): Short {
-        return get(key).asShort()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Short value for the given [key] or [default]
+     * Returns an optional Short value associated with the given [key] or 0
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is 0
      */
-    fun optShort(
-        key: String,
-        default: Short? = 0
-    ): Short? {
-        return opt(key, default).asShort()
+    fun optShort(key: String): Short {
+        return parse(optValue(key, 0))
     }
 
     /**
-     * Returns the Char value for the given [key]
+     * Returns an optional Short value associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optShort(key: String, default: Any?): Short? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the Char value associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getChar(key: String): Char {
-        return get(key).asChar()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional Char value for the given [key] or [default]
+     * Returns an optional Char value associated with the given [key] or [Char.MIN_VALUE]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is '\u0000'
      */
-    fun optChar(
-        key: String,
-        default: Char? = Char.MIN_VALUE
-    ): Char? {
-        return opt(key, default).asChar()
+    fun optChar(key: String): Char {
+        return parse(optValue(key, Char.MIN_VALUE))
     }
 
     /**
-     * Returns the [Date], saved as a timestamp, for the given [key]
+     * Returns an optional Char value associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optChar(key: String, default: Any?): Char? {
+        return parseOptional(optValue(key, default))
+    }
+
+    /**
+     * Returns the [Date] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getDate(key: String): Date {
-        return get(key).asDate()
+        return parseDate(getValue(key))
     }
 
     /**
-     * Returns an optional [Date], saved as a timestamp, for the given [key] or [default]
+     * Returns an optional [Date] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
+     */
+    fun optDate(key: String, default: Any?): Date? {
+        return parseOptionalDate(optValue(key, default))
+    }
+
+    /**
+     * Returns the [Date] associated with the given [key]
      *
-     * The [default] value can be a Date or any Number type
+     * @throws JsonException If the key doesn't exist
+     */
+    fun getDate(key: String, dateFormat: DateFormat): Date {
+        return parseDate(getValue(key), dateFormat)
+    }
+
+    /**
+     * Returns an optional [Date] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optDate(key: String, dateFormat: DateFormat, default: Any?): Date? {
+        return parseOptionalDate(optValue(key, default), dateFormat)
+    }
+
+    /**
+     * Returns the [Date] associated with the given [key]
      *
-     * By default the [default] value is 0 (1970-01-01)
+     * @throws JsonException If the key doesn't exist
+     */
+    fun getDate(key: String, format: String, locale: Locale = Locale.getDefault()): Date {
+        return parseDate(getValue(key), format, locale)
+    }
+
+    /**
+     * Returns an optional [Date] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
      */
     fun optDate(
-        key: String,
-        default: Any? = 0   //FIXME Null doesn't work as the default value
-    ): Date? {
-        return when (default) {
-            is Date -> opt(key, default)
-            is Number -> opt(key, Date(default.toLong()))
-
-            else -> {
-                if (default == null) {  //TODO Test this
-                    opt(key, null)
-                } else {
-                    throw JsonException("The default value must be either a Date or a Number type")
-                }
-            }
-        }.asDate()
-    }
-
-    /**
-     * Returns the [Date] for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    fun getDate(
-        key: String,
-        dateFormat: DateFormat
-    ): Date {
-        return get(key).asDate(dateFormat)
-    }
-
-    /**
-     * Returns an optional [Date] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * The [default] value can be a Date or any Number type
-     *
-     * By default the [default] value is 0 (1970-01-01)
-     */
-    fun optDate(
-        key: String,
-        dateFormat: DateFormat,
-        default: Any? = 0
-    ): Date? {
-        return when (default) {
-            is Date -> opt(key, default)
-            is Number -> opt(key, Date(default.toLong()))
-
-            else -> throw JsonException("The default value must be either a Date or a Number type")
-        }.asDate(dateFormat)
-    }
-
-    /**
-     * Returns the [Date] for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    fun getDate(    //TODO Update the documentation, tell the devs what are the parameters used for
         key: String,
         format: String,
+        default: Any?,
         locale: Locale = Locale.getDefault()
-    ): Date {
-        return get(key).asDate(format, locale)
+    ): Date? {  //FIXME The order is dangerous
+        return parseOptionalDate(optValue(key, default), format, locale)
     }
 
     /**
-     * Returns an optional [Date] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
+     * Returns the [Calendar] associated with the given [key]
      *
-     * The [default] value can be a Date or any Number type
-     *
-     * By default the [default] value is 0 (1970-01-01)
-     */
-    fun optDate(
-        key: String,
-        format: String,
-        locale: Locale = Locale.getDefault(),
-        default: Any? = 0
-    ): Date? {
-        return when (default) {
-            is Date -> opt(key, default)
-            is Number -> opt(key, Date(default.toLong()))
-
-            else -> throw JsonException("The default value must be either a Date or a Number type")
-        }.asDate(format, locale)
-    }
-
-    /**
-     * Returns the [Calendar], saved as a timestamp, for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getCalendar(key: String): Calendar {
-        return get(key).asCalendar()
+        return parseDate(getValue(key))
     }
 
     /**
-     * Returns an optional [Calendar], saved as a timestamp, for the given [key] or [default]
+     * Returns an optional [Calendar] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
-     *
-     * The [default] value can be a [Calendar] or any Number type
-     *
-     * By default the [default] value is 0 (1970-01-01)
      */
-    fun optCalendar(
-        key: String,
-        default: Any? = 0
-    ): Calendar? {
-        return when (default) {
-            is Calendar -> opt(key, default)
-            is Number -> opt(key, calendarOf(default.toLong()))
-
-            else -> throw JsonException("The default value must be either a Calendar or a Number type")
-        }.asCalendar()
+    fun optCalendar(key: String, default: Any?): Calendar? {
+        return parseOptionalDate(optValue(key, default))
     }
 
     /**
-     * Returns the [Calendar] for the given [key]
+     * Returns the [Calendar] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
-    fun getCalendar(
-        key: String,
-        dateFormat: DateFormat
-    ): Calendar {
-        return get(key).asCalendar(dateFormat)
+    fun getCalendar(key: String, dateFormat: DateFormat): Calendar {
+        return parseDate(getValue(key), dateFormat)
     }
 
     /**
-     * Returns an optional [Calendar] for the given [key] or [default]
+     * Returns an optional [Calendar] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
-     *
-     * The [default] value can be a [Calendar] or any Number type
-     *
-     * By default the [default] value is 0 (1970-01-01)
      */
-    fun optCalendar(
-        key: String,
-        dateFormat: DateFormat,
-        default: Any? = 0
-    ): Calendar? {
-        return when (default) {
-            is Calendar -> opt(key, default)
-            is Number -> opt(key, calendarOf(default.toLong()))
-
-            else -> throw JsonException("The default value must be either a Calendar or a Number type")
-        }.asCalendar(dateFormat)
+    fun optCalendar(key: String, dateFormat: DateFormat, default: Any?): Calendar? {
+        return parseOptionalDate(optValue(key, default), dateFormat)
     }
 
     /**
-     * Returns the [Calendar] for the given [key]
+     * Returns the [Calendar] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
-    fun getCalendar(
-        key: String,
-        format: String,
-        locale: Locale = Locale.getDefault()
-    ): Calendar {
-        return get(key).asCalendar(format, locale)
+    fun getCalendar(key: String, format: String, locale: Locale = Locale.getDefault()): Calendar {
+        return parseDate(getValue(key), format, locale)
     }
 
     /**
-     * Returns an optional [Calendar] for the given [key] or [default]
+     * Returns an optional [Calendar] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
-     *
-     * The [default] value can be a [Calendar] or any Number type
-     *
-     * By default the [default] value is 0 (1970-01-01)
      */
-    fun optCalendar(
-        key: String,
-        format: String,
-        locale: Locale = Locale.getDefault(),
-        default: Any? = 0
-    ): Calendar? {
-        return when (default) {
-            is Calendar -> opt(key, default)
-            is Number -> opt(key, calendarOf(default.toLong()))
-
-            else -> throw JsonException("The default value must be either a Calendar or a Number type")
-        }.asCalendar(format, locale)
+    fun optCalendar(key: String, format: String, default: Any?, locale: Locale = Locale.getDefault()): Calendar? {
+        return parseOptionalDate(optValue(key, default), format, locale)
     }
 
     /**
-     * Returns the [IntRange] for the given [key]
+     * Returns the [IntRange] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getRange(key: String): IntRange {
-        return get(key).asRange()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional [IntRange] for the given [key] or [default]
+     * Returns an optional [IntRange] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      */
-    fun optRange(
-        key: String,
-        default: IntRange?
-    ): IntRange? {
-        return opt(key, default).asRange()
+    fun optRange(key: String, default: Any?): IntRange? {
+        return parseOptional(optValue(key, default))
     }
 
     /**
-     * Returns the [BigDecimal] for the given [key]
+     * Returns the [BigDecimal] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getBigDecimal(key: String): BigDecimal {
-        return get(key).asBigDecimal()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional [BigDecimal] for the given [key] or [default]
+     * Returns an optional [BigDecimal] associated with the given [key] or 0
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is 0
      */
-    fun optBigDecimal(
-        key: String,
-        default: BigDecimal? = BigDecimal(0)
-    ): BigDecimal? {
-        return opt(key, default).asBigDecimal()
+    fun optBigDecimal(key: String): BigDecimal {
+        return parse(optValue(key, BigDecimal(0)))
     }
 
     /**
-     * Returns the [URL] for the given [key]
+     * Returns an optional [BigDecimal] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optBigDecimal(key: String, default: Any?): BigDecimal? {
+        return parseOptional(optValue(key,default))
+    }
+
+    /**
+     * Returns the [URL] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getURL(key: String): URL {
-        return get(key).asURL()
+        return parse(getValue(key))
     }
 
     /**
-     * Returns an optional [URL] for the given [key] or [default]
+     * Returns an optional [URL] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      */
-    fun optURL(
-        key: String,
-        default: URL?
-    ): URL? {
-        return opt(key, default).asURL()
+    fun optURL(key: String, default: Any?): URL? {
+        return parseOptional(optValue(key, default))
     }
 
     /**
-     * Returns the Enum of type [T] for the given [key]
+     * Returns the Enum of type [T] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     inline fun <reified T : Enum<T>> getEnum(key: String): T {
-        return get(key).asEnum()
+        return parseEnum(getValue(key))
     }
 
     /**
-     * Returns an optional Enum of type [T] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * THe [default] value can be an Enum of type [T] or a String
+     * Returns an optional Enum of type [T] associated with the given [key] or the
+     * first enum constant if the value is null or the [key] doesn't exist
      */
-    inline fun <reified T : Enum<T>> optEnum(key: String, default: Any): T {
-        return opt(key, default).asEnum()
+    inline fun <reified T : Enum<T>> optEnum(key: String): T {
+        val first = T::class.java.enumConstants.first()
+
+        return parseEnum(optValue(key, first))
     }
 
     /**
-     * Returns the List of Any? for the given [key]
+     * Returns an optional Enum of type [T] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    inline fun <reified T : Enum<T>> optEnum(key: String, default: Any?): T? {
+        return parseOptionalEnum<T>(optValue(key, default))
+    }
+
+    /**
+     * Returns the List of Any? associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getList(key: String): List<Any?> {
-        return get(key).asList()
+        return getJsonArray(key).toList()
     }
 
     /**
-     * Returns an optional List of Any? values for the given [key] or [default]
+     * Returns an optional List of Any? associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optList(
-        key: String,
-        default: List<Any?>? = emptyList()
-    ): List<Any?>? {
-        return opt(key, default).asList()
+    fun optList(key: String): List<Any?> {
+        return optJsonArray(key).toList()
     }
 
     /**
-     * Returns the List of String for the given [key]
+     * Returns an optional List of Any? associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optList(key: String, default: List<Any?>?): List<Any?>? {
+        return optJsonArray(key, null)?.toList() ?: default
+    }
+
+    /**
+     * Returns the List of String associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getStringList(key: String): List<String> {
-        return get(key).asStringList()
+        return getJsonArray(key).toStringList()
     }
 
     /**
-     * Returns an optional List of String for the given [key] or [default]
+     * Returns an optional List of String associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optStringList(
-        key: String,
-        default: List<String>? = emptyList()
-    ): List<String>? {
-        return opt(key, default).asStringList()
+    fun optStringList(key: String): List<String> {
+        return optJsonArray(key).toStringList()
     }
 
     /**
-     * Returns the List of Number for the given [key]
+     * Returns an optional List of String associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optStringList(key: String, default: List<String>?): List<String>? {
+        return optJsonArray(key, null)?.toStringList() ?: default
+    }
+
+    /**
+     * Returns the List of Number associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getNumberList(key: String): List<Number> {
-        return get(key).asNumberList()
+        return getJsonArray(key).toNumberList()
     }
 
     /**
-     * Returns an optional List of Number for the given [key] or [default]
+     * Returns an optional List of Number associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optNumberList(
-        key: String,
-        default: List<Number>? = emptyList()
-    ): List<Number>? {
-        return opt(key, default).asNumberList()
+    fun optNumberList(key: String): List<Number> {
+        return optJsonArray(key).toNumberList()
     }
 
     /**
-     * Returns the List of [JsonObject] for the given [key]
+     * Returns an optional List of Number associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optNumberList(key: String, default: List<Number>?): List<Number>? {
+        return optJsonArray(key, null)?.toNumberList() ?: default
+    }
+
+    /**
+     * Returns the List of [JsonObject] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getJsonObjectList(key: String): List<JsonObject> {
-        return get(key).asJsonObjectList()
+        return getJsonArray(key).toJsonObjectList()
     }
 
     /**
-     * Returns an optional List of [JsonObject] for the given [key] or [default]
+     * Returns an optional List of [JsonObject] associated with the given [key] or [emptyList]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optJsonObjectList(key: String): List<JsonObject> {
+        return optJsonArray(key).toJsonObjectList()
+    }
+
+    /**
+     * Returns an optional List of [JsonObject] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
      *
      * By default the [default] value is an empty list
      */
-    fun optJsonObjectList(
-        key: String,
-        default: List<JsonObject>? = emptyList()
-    ): List<JsonObject>? {
-        return opt(key, default).asJsonObjectList()
+    fun optJsonObjectList(key: String, default: List<JsonObject>?): List<JsonObject>? {
+        return optJsonArray(key, null)?.toJsonObjectList() ?: default
     }
 
     /**
-     * Returns the List of Int for the given [key]
+     * Returns the List of Int associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getIntList(key: String): List<Int> {
-        return get(key).asIntList()
+        return getJsonArray(key).toIntList()
     }
 
     /**
-     * Returns an optional List of Int for the given [key] or [default]
+     * Returns an optional List of Int associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optIntList(
-        key: String,
-        default: List<Int>? = emptyList()
-    ): List<Int>? {
-        return opt(key, default).asIntList()
+    fun optIntList(key: String): List<Int> {
+        return optJsonArray(key).toIntList()
     }
 
     /**
-     * Returns the List of Long for the given [key]
+     * Returns an optional List of Int associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optIntList(key: String, default: List<Int>?): List<Int>? {
+        return optJsonArray(key, null)?.toIntList() ?: default
+    }
+
+    /**
+     * Returns the List of Long associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getLongList(key: String): List<Long> {
-        return get(key).asLongList()
+        return getJsonArray(key).toLongList()
     }
 
     /**
-     * Returns an optional List of Long for the given [key] or [default]
+     * Returns an optional List of Long associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optLongList(
-        key: String,
-        default: List<Long>? = emptyList()
-    ): List<Long>? {
-        return opt(key, default).asLongList()
+    fun optLongList(key: String): List<Long> {
+        return optJsonArray(key).toLongList()
     }
 
     /**
-     * Returns the List of Boolean for the given [key]
+     * Returns an optional List of Long associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optLongList(key: String, default: List<Long>?): List<Long>? {
+        return optJsonArray(key, null)?.toLongList() ?: default
+    }
+
+    /**
+     * Returns the List of Boolean associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getBooleanList(key: String): List<Boolean> {
-        return get(key).asBooleanList()
+        return getJsonArray(key).toBooleanList()
     }
 
     /**
-     * Returns an optional List of Boolean for the given [key] or [default]
+     * Returns an optional List of Boolean associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optBooleanList(
-        key: String,
-        default: List<Boolean>? = emptyList()
-    ): List<Boolean>? {
-        return opt(key, default).asBooleanList()
+    fun optBooleanList(key: String): List<Boolean> {
+        return optJsonArray(key).toBooleanList()
     }
 
     /**
-     * Returns the List of Double for the given [key]
+     * Returns an optional List of Boolean associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optBooleanList(key: String, default: List<Boolean>?): List<Boolean>? {
+        return optJsonArray(key, null)?.toBooleanList() ?: default
+    }
+
+    /**
+     * Returns the List of Double associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getDoubleList(key: String): List<Double> {
-        return get(key).asDoubleList()
+        return getJsonArray(key).toDoubleList()
     }
 
     /**
-     * Returns an optional List of Double for the given [key] or [default]
+     * Returns an optional List of Double associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optDoubleList(
-        key: String,
-        default: List<Double>? = emptyList()
-    ): List<Double>? {
-        return opt(key, default).asDoubleList()
+    fun optDoubleList(key: String): List<Double> {
+        return optJsonArray(key).toDoubleList()
     }
 
     /**
-     * Returns the List of Float for the given [key]
+     * Returns an optional List of Double associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optDoubleList(key: String, default: List<Double>?): List<Double>? {
+        return optJsonArray(key, null)?.toDoubleList() ?: default
+    }
+
+    /**
+     * Returns the List of Float associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getFloatList(key: String): List<Float> {
-        return get(key).asFloatList()
+        return getJsonArray(key).toFloatList()
     }
 
     /**
-     * Returns an optional List of Float for the given [key] or [default]
+     * Returns an optional List of Float associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optFloatList(
-        key: String,
-        default: List<Float>? = emptyList()
-    ): List<Float>? {
-        return opt(key, default).asFloatList()
+    fun optFloatList(key: String): List<Float> {
+        return optJsonArray(key).toFloatList()
     }
 
     /**
-     * Returns the List of Byte for the given [key]
+     * Returns an optional List of Float associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optFloatList(key: String, default: List<Float>?): List<Float>? {
+        return optJsonArray(key, null)?.toFloatList() ?: default
+    }
+
+    /**
+     * Returns the List of Byte associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getByteList(key: String): List<Byte> {
-        return get(key).asByteList()
+        return getJsonArray(key).toByteList()
     }
 
     /**
-     * Returns an optional List of Byte for the given [key] or [default]
+     * Returns an optional List of Byte associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optByteList(
-        key: String,
-        default: List<Byte>? = emptyList()
-    ): List<Byte>? {
-        return opt(key, default).asByteList()
+    fun optByteList(key: String): List<Byte> {
+        return optJsonArray(key).toByteList()
     }
 
     /**
-     * Returns the List of Short for the given [key]
+     * Returns an optional List of Byte associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optByteList(key: String, default: List<Byte>?): List<Byte>? {
+        return optJsonArray(key, null)?.toByteList() ?: default
+    }
+
+    /**
+     * Returns the List of Short associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getShortList(key: String): List<Short> {
-        return get(key).asShortList()
+        return getJsonArray(key).toShortList()
     }
 
     /**
-     * Returns an optional List of Short for the given [key] or [default]
+     * Returns an optional List of Short associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optShortList(
-        key: String,
-        default: List<Short>? = emptyList()
-    ): List<Short>? {
-        return opt(key, default).asShortList()
+    fun optShortList(key: String): List<Short> {
+        return optJsonArray(key).toShortList()
     }
 
     /**
-     * Returns the List of Char for the given [key]
+     * Returns an optional List of Short associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optShortList(key: String, default: List<Short>?): List<Short>? {
+        return optJsonArray(key, null)?.toShortList() ?: default
+    }
+
+    /**
+     * Returns the List of Char associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getCharList(key: String): List<Char> {
-        return get(key).asCharList()
+        return getJsonArray(key).toCharList()
     }
 
     /**
-     * Returns an optional List of Char for the given [key] or [default]
+     * Returns an optional List of Char associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optCharList(
-        key: String,
-        default: List<Char>? = emptyList()
-    ): List<Char>? {
-        return opt(key, default).asCharList()
+    fun optCharList(key: String): List<Char> {
+        return optJsonArray(key).toCharList()
     }
 
     /**
-     * Returns the List of [Date] for the given [key]
+     * Returns an optional List of Char associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optCharList(key: String, default: List<Char>?): List<Char>? {
+        return optJsonArray(key, null)?.toCharList() ?: default
+    }
+
+    /**
+     * Returns the List of [Date] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getDateList(key: String): List<Date> {
-        return get(key).asDateList()
+        return getJsonArray(key).toDateList()
     }
 
     /**
-     * Returns an optional List of [Date] for the given [key] or [default]
+     * Returns an optional List of [Date] associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
+     */
+    fun optDateList(key: String): List<Date> {
+        return optJsonArray(key).toDateList()
+    }
+
+    /**
+     * Returns an optional List of [Date] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optDateList(key: String, default: List<Date>?): List<Date>? {
+        return optJsonArray(key, null)?.toDateList() ?: default
+    }
+
+    /**
+     * Returns the List of [Date] associated with the given [key]
      *
-     * By default the [default] value is an empty list
+     * @throws JsonException If the key doesn't exist
+     */
+    fun getDateList(key: String, dateFormat: DateFormat): List<Date> {
+        return getJsonArray(key).toDateList(dateFormat)
+    }
+
+    /**
+     * Returns an optional List of [Date] associated with the given [key] or [emptyList]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optDateList(key: String, dateFormat: DateFormat): List<Date> {
+        return optJsonArray(key).toDateList(dateFormat)
+    }
+
+    /**
+     * Returns an optional List of [Date] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optDateList(key: String, dateFormat: DateFormat, default: List<Date>?): List<Date>? {
+        return optJsonArray(key, null)?.toDateList(dateFormat) ?: default
+    }
+
+    /**
+     * Returns the List of [Date] associated with the given [key]
+     *
+     * @throws JsonException If the key doesn't exist
+     */
+    fun getDateList(key: String, format: String, locale: Locale = Locale.getDefault()): List<Date> {
+        return getJsonArray(key).toDateList(format, locale)
+    }
+
+    /**
+     * Returns an optional List of [Date] associated with the given [key] or [emptyList]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optDateList(key: String, format: String, locale: Locale = Locale.getDefault()): List<Date> {
+        return optJsonArray(key).toDateList(format, locale)
+    }
+
+    /**
+     * Returns an optional List of [Date] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
      */
     fun optDateList(
-        key: String,
-        default: List<Date>? = emptyList()
-    ): List<Date>? {
-        return opt(key, default).asDateList()
-    }
-
-    /**
-     * Returns the List of [Date] for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    fun getDateList(
-        key: String,
-        dateFormat: DateFormat
-    ): List<Date> {
-        return get(key).asDateList(dateFormat)
-    }
-
-    /**
-     * Returns an optional List of [Date] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
-     */
-    fun optDateList(
-        key: String,
-        dateFormat: DateFormat,
-        default: List<Date>? = emptyList()
-    ): List<Date>? {
-        return opt(key, default).asDateList(dateFormat)
-    }
-
-    /**
-     * Returns the List of [Date] for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    fun getDateList(
         key: String,
         format: String,
+        default: List<Date>?,
         locale: Locale = Locale.getDefault()
-    ): List<Date> {
-        return get(key).asDateList(format, locale)
-    }
-
-    /**
-     * Returns an optional List of [Date] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
-     */
-    fun optDateList(
-        key: String,
-        format: String,
-        locale: Locale = Locale.getDefault(),
-        default: List<Date>? = emptyList()
     ): List<Date>? {
-        return opt(key, default).asDateList(format, locale)
+        return optJsonArray(key, null)?.toDateList(format, locale) ?: default
     }
 
     /**
-     * Returns the List of [Calendar] for the given [key]
+     * Returns the List of [Calendar] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getCalendarList(key: String): List<Calendar> {
-        return get(key).asCalendarList()
+        return getJsonArray(key).toCalendarList()
     }
 
     /**
-     * Returns an optional List of [Calendar] for the given [key] or [default]
+     * Returns an optional List of [Calendar] associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
+     */
+    fun optCalendarList(key: String): List<Calendar> {
+        return optJsonArray(key).toCalendarList()
+    }
+
+    /**
+     * Returns an optional List of [Calendar] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optCalendarList(key: String, default: List<Calendar>?): List<Calendar>? {
+        return optJsonArray(key, null)?.toCalendarList() ?: default
+    }
+
+    /**
+     * Returns the List of [Calendar] associated with the given [key]
      *
-     * By default the [default] value is an empty list
+     * @throws JsonException If the key doesn't exist
+     */
+    fun getCalendarList(key: String, dateFormat: DateFormat): List<Calendar> {
+        return getJsonArray(key).toCalendarList(dateFormat)
+    }
+
+    /**
+     * Returns an optional List of [Calendar] associated with the given [key] or [emptyList]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optCalendarList(key: String, dateFormat: DateFormat): List<Calendar> {
+        return optJsonArray(key).toCalendarList(dateFormat)
+    }
+
+    /**
+     * Returns an optional List of [Calendar] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optCalendarList(key: String, dateFormat: DateFormat, default: List<Calendar>): List<Calendar>? {
+        return optJsonArray(key, null)?.toCalendarList(dateFormat) ?: default
+    }
+
+    /**
+     * Returns the List of [Calendar] associated with the given [key]
+     *
+     * @throws JsonException If the key doesn't exist
+     */
+    fun getCalendarList(key: String, format: String, locale: Locale = Locale.getDefault()): List<Calendar> {
+        return getJsonArray(key).toCalendarList(format, locale)
+    }
+
+    /**
+     * Returns an optional List of [Calendar] associated with the given [key] or [emptyList]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optCalendarList(key: String, format: String, locale: Locale = Locale.getDefault()): List<Calendar> {
+        return optJsonArray(key).toCalendarList(format, locale)
+    }
+
+    /**
+     * Returns an optional List of [Calendar] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
      */
     fun optCalendarList(
-        key: String,
-        default: List<Calendar>? = emptyList()
-    ): List<Calendar>? {
-        return opt(key, default).asCalendarList()
-    }
-
-    /**
-     * Returns the List of [Calendar] for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    fun getCalendarList(
-        key: String,
-        dateFormat: DateFormat
-    ): List<Calendar> {
-        return get(key).asCalendarList(dateFormat)
-    }
-
-    /**
-     * Returns an optional List of [Calendar] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
-     */
-    fun optCalendarList(
-        key: String,
-        dateFormat: DateFormat,
-        default: List<Calendar>? = emptyList()
-    ): List<Calendar>? {
-        return opt(key, default).asCalendarList(dateFormat)
-    }
-
-    /**
-     * Returns the List of [Calendar] for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    fun getCalendarList(
         key: String,
         format: String,
+        default: List<Calendar>?,
         locale: Locale = Locale.getDefault()
-    ): List<Calendar> {
-        return get(key).asCalendarList(format, locale)
-    }
-
-    /**
-     * Returns an optional List of [Calendar] for the given [key] or [default]
-     * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
-     */
-    fun optCalendarList(
-        key: String,
-        format: String,
-        locale: Locale = Locale.getDefault(),
-        default: List<Calendar>? = emptyList()
     ): List<Calendar>? {
-        return opt(key, default).asCalendarList(format, locale)
+        return optJsonArray(key, null)?.toCalendarList(format, locale) ?: default
     }
 
     /**
-     * Returns the List of [IntRange] for the given [key]
+     * Returns the List of [IntRange] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getRangeList(key: String): List<IntRange> {
-        return get(key).asRangeList()
+        return getJsonArray(key).toRangeList()
     }
 
     /**
-     * Returns an optional List of [IntRange] for the given [key] or [default]
+     * Returns an optional List of [IntRange] associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optRangeList(
-        key: String,
-        default: List<IntRange>? = emptyList()
-    ): List<IntRange>? {
-        return opt(key, default).asRangeList()
+    fun optRangeList(key: String): List<IntRange> {
+        return optJsonArray(key).toRangeList()
     }
 
     /**
-     * Returns the List of [BigDecimal] for the given [key]
+     * Returns an optional List of [IntRange] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optRangeList(key: String, default: List<IntRange>?): List<IntRange>? {
+        return optJsonArray(key, null)?.toRangeList() ?: default
+    }
+
+    /**
+     * Returns the List of [BigDecimal] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getBigDecimalList(key: String): List<BigDecimal> {
-        return get(key).asBigDecimalList()
+        return getJsonArray(key).toBigDecimalList()
     }
 
     /**
-     * Returns an optional List of [BigDecimal] for the given [key] or [default]
+     * Returns an optional List of [BigDecimal] associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optBigDecimalList(
-        key: String,
-        default: List<BigDecimal>? = emptyList()
-    ): List<BigDecimal>? {
-        return opt(key, default).asBigDecimalList()
+    fun optBigDecimalList(key: String): List<BigDecimal> {
+        return optJsonArray(key).toBigDecimalList()
     }
 
     /**
-     * Returns the List of [URL] for the given [key]
+     * Returns an optional List of [BigDecimal] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optBigDecimalList(key: String, default: List<BigDecimal>?): List<BigDecimal>? {
+        return optJsonArray(key, null)?.toBigDecimalList() ?: default
+    }
+
+    /**
+     * Returns the List of [URL] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     fun getURLList(key: String): List<URL> {
-        return get(key).asURLList()
+        return getJsonArray(key).toURLList()
     }
 
     /**
-     * Returns an optional List of [URL] for the given [key] or [default]
+     * Returns an optional List of [URL] associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    fun optURLList(
-        key: String,
-        default: List<URL>? = emptyList()
-    ): List<URL>? {
-        return opt(key, default).asURLList()
+    fun optURLList(key: String): List<URL> {
+        return optJsonArray(key).toURLList()
     }
 
     /**
-     * Returns the List of Enum of type [T] for the given [key]
+     * Returns an optional List of [URL] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    fun optURLList(key: String, default: List<URL>?): List<URL>? {
+        return optJsonArray(key, null)?.toURLList() ?: default
+    }
+
+    /**
+     * Returns the List of Enum of type [T] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
     inline fun <reified T : Enum<T>> getEnumList(key: String): List<T> {
-        return get(key).asEnumList()
+        return getJsonArray(key).toEnumList()
     }
 
     /**
-     * Returns an optional List of Enum of type [T] for the given [key] or [default]
+     * Returns an optional List of Enum of type [T] associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    inline fun <reified T : Enum<T>> optEnumList(
-        key: String,
-        default: List<T>? = emptyList()
-    ): List<T>? {
-        return opt(key, default).asEnumList()
+    inline fun <reified T : Enum<T>> optEnumList(key: String): List<T> {
+        return optJsonArray(key).toEnumList()
     }
 
     /**
-     * Returns the List of type [T] for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    inline fun <reified T> getList(
-        key: String,
-        transform: (Any?) -> T
-    ): List<T> {
-        return get(key).asList(transform)
-    }
-
-    /**
-     * Returns an optional List of type [T] for the given [key] or [default]
+     * Returns an optional List of Enum of type [T] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    inline fun <reified T> optList(
-        key: String,
-        transform: (Any?) -> T,
-        default: List<T>? = emptyList()
-    ): List<T>? {
-        return opt(key, default).asList(transform)
+    inline fun <reified T : Enum<T>> optEnumList(key: String, default: List<T>?): List<T>? {
+        return optJsonArray(key, null)?.toEnumList() ?: default
     }
 
     /**
-     * Returns the object of type [T] for the given [key]
+     * Returns the List of type [T] associated with the given [key]
      *
-     * @throws JsonException If the given key doesn't exist
+     * @throws JsonException If the key doesn't exist
      */
-    inline fun <T> getObject(
-        key: String,
-        transform: (JsonObject) -> T
-    ): T {
-        return get(key).asObject(transform)
+    inline fun <reified T> getList(key: String, transform: (Any?) -> T): List<T> {
+        return getJsonArray(key).toList(transform)
     }
 
     /**
-     * Returns an optional object of type [T] for the given [key] or [default]
+     * Returns an optional List of type [T] associated with the given [key] or [emptyList]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is a null instance
      */
-    inline fun <T> optObject(
-        key: String,
-        transform: (JsonObject) -> T,
-        default: T? = null
-    ): T? {
-        return opt(key, default).asObject(transform)
+    inline fun <reified T> optList(key: String, transform: (Any?) -> T): List<T> {
+        return optJsonArray(key).toList(transform)
     }
 
     /**
-     * Returns the List of objects of type [T] for the given [key]
-     *
-     * @throws JsonException If the given key doesn't exist
-     */
-    inline fun <T> getObjectList(
-        key: String,
-        transform: (JsonObject) -> T
-    ): List<T> {
-        return get(key).asObjectList(transform)
-    }
-
-    /**
-     * Returns an optional List of objects of type [T] for the given [key] or [default]
+     * Returns an optional List of type [T] associated with the given [key] or [default]
      * if the value is null or the [key] doesn't exist
-     *
-     * By default the [default] value is an empty list
      */
-    inline fun <reified T> optObjectList(
-        key: String,
-        transform: (JsonObject) -> T,
-        default: List<T>? = emptyList()
-    ): List<T>? {
-        return opt(key, default).asObjectList(transform)
+    inline fun <reified T> optList(key: String, default: List<T>?, transform: (Any?) -> T): List<T>? {
+        return optJsonArray(key, null)?.toList(transform) ?: default
+    }
+
+    /**
+     * Returns the object of type [T] associated with the given [key]
+     *
+     * @throws JsonException If the key doesn't exist
+     */
+    inline fun <T> getObject(key: String, transform: (JsonObject) -> T): T {
+        return transform(getJsonObject(key))
+    }
+
+    /**
+     * Returns an optional object of type [T] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    inline fun <T> optObject(key: String, default: T? = null, transform: (JsonObject) -> T): T? {
+        return transform(optJsonObject(key)) ?: default
+    }
+
+    /**
+     * Returns the List of objects of type [T] associated with the given [key]
+     *
+     * @throws JsonException If the key doesn't exist
+     */
+    inline fun <T> getObjectList(key: String, transform: (JsonObject) -> T): List<T> {
+        return getJsonArray(key).toObjectList(transform)
+    }
+
+    /**
+     * Returns an optional List of objects of type [T] associated with the given [key] or [emptyList]
+     * if the value is null or the [key] doesn't exist
+     */
+    inline fun <reified T> optObjectList(key: String, transform: (JsonObject) -> T): List<T> {
+        return optJsonArray(key).toObjectList(transform)
+    }
+
+    /**
+     * Returns an optional List of objects of type [T] associated with the given [key] or [default]
+     * if the value is null or the [key] doesn't exist
+     */
+    inline fun <reified T> optObjectList(key: String, default: List<T>?, transform: (JsonObject) -> T): List<T>? {
+        return optJsonArray(key, null)?.toObjectList(transform) ?: default
     }
 }
