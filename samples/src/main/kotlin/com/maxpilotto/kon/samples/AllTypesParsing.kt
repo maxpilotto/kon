@@ -53,13 +53,13 @@ data class Object(
         IntRange(1, 10),
         IntRange(1, 10),
         IntRange(1, 10)
-    )
+    ),
+    @JsonProperty(isOptional = true, defaultValue = "15")
+    val optInt: Int? = 0
 )
 
 fun main() {
-    val obj = Object().also {
-        println(it)
-    }
-    val objToJson = ObjectEncoder(obj).also { println(it) }
+    val obj = Object().also { println(it) }
+    val objToJson = ObjectEncoder(obj).also { it.remove("optInt"); println(it) }
     val jsonToObj = ObjectDecoder(objToJson).also { println(it) }
 }

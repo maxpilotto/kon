@@ -20,7 +20,6 @@ import com.maxpilotto.kon.JsonObject
 import com.maxpilotto.kon.annotations.JsonProperty
 import com.maxpilotto.kon.processor.extensions.simpleName
 import com.squareup.kotlinpoet.asTypeName
-import java.io.File
 import java.math.BigDecimal
 import java.net.URL
 import java.util.*
