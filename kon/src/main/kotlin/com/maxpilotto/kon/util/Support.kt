@@ -39,10 +39,18 @@ fun stringify(value: Any?): String {
 /**
  * Returns whether or not the given [value] is null
  *
- * This will also check if the value is a String and the content is equal to "null"
+ * A value is considered null/optional when it's equal to one of the following:
+ * + null
+ * + "null" (not case sensitive)
+ * + "" (empty string)
  */
 internal fun isNull(value: Any?): Boolean {
-    return (value == null || value is String && value.equals("null",true))
+    return if (value is String) {
+        value.equals("null",true) ||
+                value.isEmpty()
+    } else {
+        value == null
+    }
 }
 
 /**

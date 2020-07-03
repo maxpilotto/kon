@@ -99,9 +99,9 @@ class EncodableProcessor : KonProcessor() {
 
     private fun encodeClass(element: Element): List<FunSpec> {  //TODO Add method for list decoding/encoding
         val doc = """
-            Returns the calling object as a [JsonObject]
+            Returns the given [data] model as a [JsonObject]
             
-            If any of the properties is not supported by the [JsonObject]'s [JsonObject.set] method and it 
+            If any of the properties is not supported by the [JsonObject.set] method and it 
             is not marked as [JsonEncodable], the toString() method of that instance will be called and that
             property will be saved as a String
             
@@ -435,7 +435,7 @@ class EncodableProcessor : KonProcessor() {
             isSubclass(component, JsonObject::class) -> code.add("parse<JsonObject>(it)")
             isSubclass(component, JsonArray::class) -> code.add("parse<JsonArray>(it)")
             isSubclass(component, IntRange::class) -> code.add("parse<IntRange>(it)")
-            isSubclass(component, URL::class) -> code.add("parse<URL>(it)")
+            isSubclass(component, URL::class) -> code.add("parse<URL>(it)") //TODO Type needs import
 
             // Date & Calendar
             isSubclass(component, Date::class) || isSubclass(component, Calendar::class) -> {

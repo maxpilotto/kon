@@ -629,7 +629,7 @@ class JsonObject : Json, MutableIterable<MutableMap.MutableEntry<String, Any?>> 
      *
      * @throws JsonException If the key doesn't exist
      */
-    fun getDate(key: String, format: String, locale: Locale = Locale.getDefault()): Date {
+    fun getDate(key: String, format: String, locale: Locale = Locale.getDefault()): Date {  //TODO Remove the locale from the library, like fr who needs that?
         return parseDate(getValue(key), format, locale)
     }
 
