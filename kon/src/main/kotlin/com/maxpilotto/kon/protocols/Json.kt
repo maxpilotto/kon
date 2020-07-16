@@ -220,12 +220,18 @@ abstract class Json {
 
     /**
      * Returns this entity as a pretty printable output
+     *
+     * @param indent Indentation character used at the start of each line
+     * @param oneLine Whether or not the output should contain or not line breaks
      */
     //TODO Add indent option
     //TODO Add params
     // showType, shows the type of the property
     // useBraces, shows {properties} instead of JsonObject(properties), enabled by default
-    abstract fun prettify(): String
+    abstract fun prettify(
+        indent: String = "",
+        lineBreak: Boolean = false
+    ): String
 
     companion object {
         const val DATE_FORMAT = "yyyy-MM-dd"

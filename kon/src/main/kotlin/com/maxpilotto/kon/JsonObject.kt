@@ -23,6 +23,9 @@ import java.net.URL
 import java.text.DateFormat
 import java.util.*
 
+typealias JsonMap = MutableMap<String, Any?>
+typealias JsonEntry = MutableMap.MutableEntry<String, Any?>
+
 /**
  * # JsonObject
  *
@@ -54,12 +57,12 @@ import java.util.*
  * ```
  */
 class JsonObject : Json {   //TODO Add value observer
-    private var map: MutableMap<String, Any?>
+    private var map: JsonMap
 
     /**
      * Returns a [MutableSet] of all key/value pairs in this object
      */
-    val entries: MutableSet<MutableMap.MutableEntry<String, Any?>>
+    val entries: MutableSet<JsonEntry>  //TODO Add a method to iterate these
         get() = map.entries
 
     /**
@@ -119,7 +122,7 @@ class JsonObject : Json {   //TODO Add value observer
         return prettify()
     }
 
-    override fun prettify(): String {
+    override fun prettify(indent: String, lineBreak: Boolean): String {
         return map.entries.joinToString(",", "{", "}", transform = {
             "\"${it.key}\":${stringify(it.value)}"
         })
@@ -131,6 +134,10 @@ class JsonObject : Json {   //TODO Add value observer
 
     override fun set(key: String, element: Any?) {
         map[key] = wrap(element)
+    }
+
+    fun entries(block: (JsonEntry) -> Unit) {
+        entries.forEach(block)
     }
 
     /**

@@ -101,7 +101,7 @@ class JsonValue : Json {
         }
     }
 
-    override fun prettify(): String {
+    override fun prettify(indent: String, lineBreak: Boolean): String {
         return stringify(content)
     }
 

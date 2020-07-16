@@ -100,10 +100,23 @@ class JsonArray : Json, MutableList<Any?> {
         return prettify()
     }
 
-    override fun prettify(): String {
-        return list.joinToString(",", "[", "]", transform = {
-            stringify(it)
-        })
+    override fun prettify(indent: String, lineBreak: Boolean): String {
+        val br = if (lineBreak) "\n" else ""
+
+        return list.joinToString(
+            ",$br",
+            "[$br",
+            "$br]$br",
+            transform = {
+                val string = if (it is JsonArray) {
+                    it.prettify(indent + indent,lineBreak)
+                } else {
+                    stringify(it)
+                }
+
+                indent + string
+            }
+        )
     }
 
     override fun get(index: Int): JsonValue {
